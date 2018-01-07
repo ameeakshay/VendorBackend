@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "This module is a backend to authenticate the lgin",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ameeakshay/VendorBackend.git"
+  },
+  "author": "Akshay Trivedi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ameeakshay/VendorBackend/issues"
+  },
+  "homepage": "https://github.com/ameeakshay/VendorBackend#readme",
+  "dependencies": {
+    "express": "^4.16.2"
+  }
+}
