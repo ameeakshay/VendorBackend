@@ -43,8 +43,5 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-var db = require('./db');
-
-db.connect();
 
 module.exports = app;
