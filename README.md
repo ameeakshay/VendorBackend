@@ -1,2 +1,2 @@
 # VendorBackend
-This repository includes the backend implementation for VendorApp
+This repository includes the backend implementation for VendorApp.
