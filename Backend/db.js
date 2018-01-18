@@ -3,9 +3,9 @@ var mysql=require('mysql');
 var connection=mysql.createConnection({
  
   host: 'localhost',
-  user: 'root',
-  password: 'vendorapp',
-  database: 'VendorApp'
+  user: 'arihantjain',
+  password: 'Killerjoker',
+  database: 'ClientVendor'
  
 });
 
