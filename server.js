@@ -12,11 +12,7 @@ const port = process.env.PORT || 8080;
 
 const passport = require('passport');
 const flash = require('connect-flash');
-
-// configuration ===============================================================
-// connect to our database
-
-require('./config/passport')(passport); // pass passport for configuration
+const env = require('dotenv').load();
 
 // set up our express application
 app.use(morgan('dev')); // log every request to the console
@@ -38,6 +34,25 @@ app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
 
+
+//Models
+var models = require("./app/models");
+ 
+
+//load passport strategies
+ 
+require('./config/passport.js')(passport, models);
+
+//Sync Database
+models.sequelize.sync().then(function() {
+ 
+    console.log('Nice! Database looks fine')
+ 
+}).catch(function(err) {
+ 
+    console.log(err, "Something went wrong with the Database Update!")
+ 
+});
 
 // routes ======================================================================
 require('./app/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
