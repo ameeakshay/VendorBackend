@@ -2,19 +2,19 @@
  
     var Client = sequelize.define('client', {
  
-        client_id: {
+        id: {
             primaryKey: true,
             type: Sequelize.STRING
         },
  
-        client_email: {
+        email: {
             type: Sequelize.STRING,
             validate: {
                 isEmail: true
             }
         },
  
-        client_password: {
+        password: {
             type: Sequelize.STRING,
             allowNull: false
         }

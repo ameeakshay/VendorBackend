@@ -2,19 +2,19 @@
  
     var Vendor = sequelize.define('vendor', {
  
-        vendor_id: {
+        id: {
             primaryKey: true,
             type: Sequelize.STRING
         },
  
-        vendor_email: {
+        email: {
             type: Sequelize.STRING,
             validate: {
                 isEmail: true
             }
         },
  
-        vendor_password: {
+        password: {
             type: Sequelize.STRING,
             allowNull: false
         }

@@ -41,7 +41,7 @@ var models = require("./app/models");
 
 //load passport strategies
  
-require('./config/passport.js')(passport, models);
+require('./app/config/passport.js')(passport, models);
 
 //Sync Database
 models.sequelize.sync().then(function() {
@@ -55,7 +55,7 @@ models.sequelize.sync().then(function() {
 });
 
 // routes ======================================================================
-require('./app/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
+require('./app/routes/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
 
 // launch ======================================================================
 app.listen(port);

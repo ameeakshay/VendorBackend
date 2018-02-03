@@ -18,21 +18,25 @@ module.exports = function(passport, model) {
         return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
     };
 
+    var isValidPassword = function(userpass, password) {
+        return bCrypt.compareSync(password, userpass);
+    }
+
     //serialize
     passport.serializeUser(function(user, done) {
 
-        Client.findById(user.client_id).then(function(client) {
+        Client.findById(user.id).then(function(client) {
 
             if(client) {
-                done(null, client.client_id);
+                done(null, client.id);
             }
             else {
-                Vendor.findById(user.vendor_id).then(function(vendor) {
+                Vendor.findById(user.id).then(function(vendor) {
                     if (vendor) {
-                        done(null, vendor.vendor_id);
+                        done(null, vendor.id);
                     }
                     else {
-                        done(vendor.errors, null);
+                        done(vendor.errors(), null);
                     }
                 })
             }
@@ -41,20 +45,6 @@ module.exports = function(passport, model) {
 
     // deserialize user 
     passport.deserializeUser(function(id, done) {
-     
-        // Client.findById(id).then(function(user) {
-     
-        //     if (user) {
-     
-        //         done(null, user.get());
-     
-        //     } else {
-     
-        //         done(user.errors, null);
-     
-        //     }
-     
-        // });
 
         Client.findById(id).then(function(client) {
 
@@ -67,7 +57,7 @@ module.exports = function(passport, model) {
                         done(null, vendor.get());
                     }
                     else {
-                        done(vendor.errors, null);
+                        done(vendor.errors(), null);
                     }
                 })
             }
@@ -75,20 +65,33 @@ module.exports = function(passport, model) {
      
     });
 
-    passport.use('local-signup-client', new LocalStrategy(
+    passport.use('local-signup', new LocalStrategy(
     {
         usernameField: 'username',
         passwordField: 'password',
         passReqToCallback: true // allows us to pass back the entire request to the callback
     }, function(req, username, password, done) {
 
-            Client.findOne({
-                where: {
-                    client_email: username
-                }
-            }).then(function(client) {
+            var User;
 
-                if (client)
+            if (req.query.type == 'client') {
+                console.log('client');
+
+                User = Client;
+            }
+            else if (req.query.type == 'vendor'){
+                console.log('vendor');
+            
+                User = Vendor;
+            }
+
+            User.findOne({
+                where: {
+                    email: username
+                }
+            }).then(function(user) {
+
+                if (user)
                 {
                     return done(null, false, {
                         message: 'That email is already taken'
@@ -100,57 +103,12 @@ module.exports = function(passport, model) {
                     console.log(random_id);
 
                     var data = {
-                        client_id: random_id, 
-                        client_email: username,
-                        client_password: userPassword
+                        id: random_id, 
+                        email: username,
+                        password: userPassword
                     };
 
-                    Client.create(data).then(function(newUser, created) {
-                        
-                        if (!newUser) {
-                            return done(null, false);
-                        }
-
-                        if (newUser) {
-                            return done(null, newUser);
-                        }
-                    });
-                }
-            });
-        }
-    ));
-
-    passport.use('local-signup-vendor', new LocalStrategy(
-    {
-        usernameField: 'username',
-        passwordField: 'password',
-        passReqToCallback: true // allows us to pass back the entire request to the callback
-    }, function(req, username, password, done) {
-
-            Vendor.findOne({
-                where: {
-                    vendor_email: username
-                }
-            }).then(function(vendor) {
-
-                if (vendor)
-                {
-                    return done(null, false, {
-                        message: 'That email is already taken'
-                    });
-                } else {
-
-                    var userPassword = generateHash(password);
-                    const random_id = crypto.randomBytes(16).toString('hex');
-                    console.log(random_id);
-
-                    var data = {
-                        vendor_id: random_id, 
-                        vendor_email: username,
-                        vendor_password: userPassword
-                    };
-
-                    Vendor.create(data).then(function(newUser, created) {
+                    User.create(data).then(function(newUser, created) {
                         
                         if (!newUser) {
                             return done(null, false);
@@ -174,31 +132,38 @@ module.exports = function(passport, model) {
         passReqToCallback: true // allows us to pass back the entire request to the callback
     }, function(req, username, password, done) {
 
-            var Client = model.client;
+            var user;
 
-            var isValidPassword = function(userpass, password) {
-                return bCrypt.compareSync(password, userpass);
+            if (req.query.type == 'client') {
+                console.log('client');
+
+                User = Client;
+            }
+            else if (req.query.type == 'vendor'){
+                console.log('vendor');
+            
+                User = Vendor;
             }
 
-            Client.findOne({
+            User.findOne({
                 where: {
-                    client_email: username
+                    email: username
                 }
-            }).then(function(client) {
+            }).then(function(user) {
 
-                if (!client) {
+                if (!user) {
                     return done(null, false, {
                         message: 'Email does not exist'
                     });
                 }
 
-                if (!isValidPassword(client.client_password, password)) {
+                if (!isValidPassword(user.password, password)) {
                     return done(null, false, {
                         message: 'Incorrect password.'
                     });
                 }
 
-                var userinfo = client.get();
+                var userinfo = user.get();
                 return done(null, userinfo);
 
             }).catch(function(err) {
@@ -209,4 +174,5 @@ module.exports = function(passport, model) {
             });
         }
     ));
+
 }
