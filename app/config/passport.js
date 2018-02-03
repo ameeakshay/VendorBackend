@@ -134,12 +134,12 @@ module.exports = function(passport, model) {
 
             var user;
 
-            if (req.query.type == 'client') {
+            if (req.body.type == 'client') {
                 console.log('client');
 
                 User = Client;
             }
-            else if (req.query.type == 'vendor'){
+            else if (req.body.type == 'vendor'){
                 console.log('vendor');
             
                 User = Vendor;
