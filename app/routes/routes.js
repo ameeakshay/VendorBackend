@@ -4,6 +4,21 @@ module.exports = (app, passport) => {
     // =====================================
     // HOME PAGE (with login links) ========
     // =====================================
+
+    var temp = {
+        'status' : '',
+        'message' : '',
+        'data' : ''
+    };
+
+    app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+        message: err.message,
+        error: {}
+    });
+});
+
     app.get('/', (req, res) => {
         res.render('index.ejs'); // load the index.ejs file
     });
@@ -19,20 +34,34 @@ module.exports = (app, passport) => {
     });
 
     // process the login form
-    app.post('/login', passport.authenticate('local-login', {
-        successRedirect: '/profile', // redirect to the secure profile section
-        failureRedirect: '/login', // redirect back to the signup page if there is an error
-        failureFlash: true, // allow flash messages
-    }), ({ body, session }, res) => {
-        console.log('hello');
+    app.post('/login', (req, res, next) => {
 
-        if (body.remember) {
-            session.cookie.maxAge = 1000 * 60 * 3;
-        } else {
-            session.cookie.expires = false;
-        }
-        res.redirect('/');
+        passport.authenticate('local-login',  (err, user, info) => {
+            console.log('hello');
+
+            if (err) { return next(err); }
+
+                if (!user){
+                temp.message = 'Authentication Failed';
+                temp.status = '401';
+                temp.data = null;
+
+                return res.send(temp);
+            }
+
+            req.logIn(user, function(err) {
+
+            if (err) { return next(err); }
+
+                temp.message = 'Request Successfull';
+                temp.status = '200';
+                temp.data = user;
+
+                return res.send(temp);
+            });
+        })(req, res, next);   
     });
+
 
     // =====================================
     // SIGNUP ==============================
@@ -56,9 +85,12 @@ module.exports = (app, passport) => {
     // we will want this protected so you have to be logged in to visit
     // we will use route middleware to verify this (the isLoggedIn function)
     app.get('/profile', isLoggedIn, ({ user }, res) => {
-        res.render('profile.ejs', {
-            user, // get the user out of session and pass to template
-        });
+        // res.render('profile.ejs', {
+        //     user, // get the user out of session and pass to template
+        // });
+        // res.send(user);
+                console.log("This is the data to be displayed");
+        console.log(user.id);
     });
 
     // =====================================
