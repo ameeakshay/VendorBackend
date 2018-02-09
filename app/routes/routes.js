@@ -46,7 +46,7 @@ module.exports = (app, passport) => {
                 temp.status = '401';
                 temp.data = null;
 
-                return res.send(temp);
+                return res.status(temp.status).json(temp);
             }
 
             req.logIn(user, function(err) {
@@ -57,7 +57,7 @@ module.exports = (app, passport) => {
                 temp.status = '200';
                 temp.data = user;
 
-                return res.send(temp);
+                return res.status(temp.status).json(temp);
             });
         })(req, res, next);   
     });
