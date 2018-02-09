@@ -118,6 +118,33 @@ module.exports = (app, passport, models) => {
         })
     });
 
+
+    //Route to create a main category...this will only be used by developers and Admin
+    app.post('/main-categories', function(req, res) {
+
+        var MainCategory = models.main_category;
+
+            var data = {
+                name: req.body.name
+            };
+
+            MainCategory.create(data).then(function(mainCategory) {
+
+                if (mainCategory) {
+                    temp.status = 201;
+                    temp.message = 'Successfully created the categorY';
+                    temp.data = mainCategory;
+                }
+                else {
+                    temp.status = 409;
+                    temp.message = 'Unable to create the category';
+                    temp.data = [];
+                }
+
+                res.status(temp.status)
+                    .json(temp);
+            });
+    });
     //Route to get all the Sub Categories associated with a Main Category
     app.get('/sub-categories/:id', function(req, res) {
         var SubCategory = models.sub_category;
@@ -137,6 +164,33 @@ module.exports = (app, passport, models) => {
 
             res.status(temp.status)
                 .json(temp);
+        })
+    });
+
+    //Route to create sub categories for a main category...for Developers and Admin usage only
+    app.post('/sub-categories', function(req, res) {
+        var SubCategory = models.sub_category;
+
+        var data = {
+                name: req.body.name,
+                mainCategoryId: req.body.mainCategoryId
+            };
+
+        SubCategory.create(data).then(function(subCategory) {
+
+            if (subCategory) {
+                    temp.status = 201;
+                    temp.message = 'Successfully created the sub categorY';
+                    temp.data = subCategory;
+                }
+                else {
+                    temp.status = 409;
+                    temp.message = 'Unable to create the sub category';
+                    temp.data = [];
+                }
+
+                res.status(temp.status)
+                    .json(temp);
         })
     });
 
