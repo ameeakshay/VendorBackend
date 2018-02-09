@@ -1,5 +1,6 @@
 // app/routes.js
-module.exports = (app, passport) => {
+
+module.exports = (app, passport, models) => {
 
     // =====================================
     // HOME PAGE (with login links) ========
@@ -89,8 +90,88 @@ module.exports = (app, passport) => {
         //     user, // get the user out of session and pass to template
         // });
         // res.send(user);
-                console.log("This is the data to be displayed");
+        console.log("This is the data to be displayed");
         console.log(user.id);
+    });
+
+    //Route to get all the Main Categories
+    app.get('/main-categories', (req, res) => {
+        var MainCategory = models.main_category;
+
+        console.log(req.user);
+
+        MainCategory.findAll().then(function(mainCategories) {
+                
+            temp.status = 200;
+
+            if (!mainCategories.length) {
+                temp.message = 'No Main Categories Found';
+                temp.data = [];    
+            }
+            else { 
+                temp.message = 'All the Main Categories';
+                temp.data = mainCategories;   
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        })
+    });
+
+    //Route to get all the Sub Categories associated with a Main Category
+    app.get('/sub-categories/:id', function(req, res) {
+        var SubCategory = models.sub_category;
+
+        SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
+
+            temp.status = 200;
+            
+            if (!subCategories.length) {
+                temp.message = 'No Sub Categories Found';
+                temp.data = [];
+            }
+            else {
+                temp.message = 'Sub categories corresponding to Main Category #' + req.params.id;
+                temp.data = subCategories;   
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        })
+    });
+
+    app.post('/tender', function(req, res) {
+
+        var Tender = models.tender;
+
+        if (req.user.id && req.body.duration && req.body.quantity && req.body.subCategoryId) {
+
+            var tenderData = {
+                tenderEnds: req.body.duration,
+                quantity: req.body.quantity,
+                clientId: req.user.id,
+                subCategoryId: req.body.subCategoryId
+            };
+
+            Tender.create(tenderData).then(function(newTender) {
+
+                if (newTender) {
+                    temp.status = 201;
+                    temp.message = 'Successfully created the Tender';
+                    temp.data = newTender;
+                }
+                else {
+                    temp.status = 409;
+                    temp.message = 'Unable to create the Tender';
+                    temp.data = [];
+                }
+
+                res.status(temp.status)
+                    .json(temp);
+            });
+        }
+
+
     });
 
     // =====================================

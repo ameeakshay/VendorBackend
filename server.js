@@ -59,7 +59,7 @@ models.sequelize.sync().then(function() {
 });
 
 // routes ======================================================================
-require('./app/routes/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
+require('./app/routes/routes.js')(app, passport, models); // load our routes and pass in our app and fully configured passport
 
 // launch ======================================================================
 app.listen(port);
