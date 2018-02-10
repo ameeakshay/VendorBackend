@@ -12,14 +12,6 @@ module.exports = (app, passport, models) => {
         'data' : ''
     };
 
-    app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-        message: err.message,
-        error: {}
-    });
-});
-
     app.get('/', (req, res) => {
         res.render('index.ejs'); // load the index.ejs file
     });
@@ -52,7 +44,7 @@ module.exports = (app, passport, models) => {
 
             req.logIn(user, function(err) {
 
-            if (err) { return next(err); }
+                if (err) { return next(err); }
 
                 temp.message = 'Request Successfull';
                 temp.status = '200';
@@ -119,7 +111,7 @@ module.exports = (app, passport, models) => {
     });
 
     //Route to get all the Main Categories
-    app.get('/main-categories', (req, res) => {
+    app.get('/main_categories', (req, res) => {
         var MainCategory = models.main_category;
 
         console.log(req.user);
@@ -144,7 +136,7 @@ module.exports = (app, passport, models) => {
 
 
     //Route to create a main category...this will only be used by developers and Admin
-    app.post('/main-categories', function(req, res) {
+    app.post('/main_categories', function(req, res) {
 
         var MainCategory = models.main_category;
 
@@ -170,7 +162,7 @@ module.exports = (app, passport, models) => {
             });
     });
     //Route to get all the Sub Categories associated with a Main Category
-    app.get('/sub-categories/:id', function(req, res) {
+    app.get('/sub_categories/:id', function(req, res) {
         var SubCategory = models.sub_category;
 
         SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
@@ -192,7 +184,7 @@ module.exports = (app, passport, models) => {
     });
 
     //Route to create sub categories for a main category...for Developers and Admin usage only
-    app.post('/sub-categories', function(req, res) {
+    app.post('/sub_categories', function(req, res) {
         var SubCategory = models.sub_category;
 
         var data = {
@@ -204,7 +196,7 @@ module.exports = (app, passport, models) => {
 
             if (subCategory) {
                     temp.status = 201;
-                    temp.message = 'Successfully created the sub categorY';
+                    temp.message = 'Successfully created the sub category';
                     temp.data = subCategory;
                 }
                 else {
@@ -218,16 +210,16 @@ module.exports = (app, passport, models) => {
         })
     });
 
-    app.post('/tender', function(req, res) {
+    app.post('/tender/:id', function(req, res) {
 
         var Tender = models.tender;
 
-        if (req.user.id && req.body.duration && req.body.quantity && req.body.subCategoryId) {
+        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.user.id == req.params.id) {
 
             var tenderData = {
                 tenderEnds: req.body.duration,
                 quantity: req.body.quantity,
-                clientId: req.user.id,
+                clientId: req.params.id,
                 subCategoryId: req.body.subCategoryId
             };
 
@@ -248,8 +240,6 @@ module.exports = (app, passport, models) => {
                     .json(temp);
             });
         }
-
-
     });
 
     // =====================================
@@ -258,6 +248,31 @@ module.exports = (app, passport, models) => {
     app.get('/logout', (req, res) => {
         req.logout();
         res.redirect('/');
+    });
+
+    app.get('/client_tenders/:id', function(req, res) {
+
+        var Tender = models.tender;
+
+        if (req.params.id && req.params.id == req.user.id) {
+
+            Tender.findAll({where: {clientId: req.params.id}}).then(function(clientTenders) {
+
+                if (clientTenders) {
+                    temp.status = 200;
+                    temp.message = 'Retreived all Tenders for Client ' + req.user.id;
+                    temp.data = clientTenders;
+                }
+                else {
+                    temp.status = 200;
+                    temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
+                    temp.data = null;
+                }
+
+                res.status(temp.status)
+                    .json(temp);
+            })
+        }
     });
 };
 
