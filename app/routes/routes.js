@@ -73,12 +73,36 @@ module.exports = (app, passport, models) => {
         res.render('signup.ejs', { message: req.flash('signupMessage') });
     });
 
-    // process the signup form
-    app.post('/signup', passport.authenticate('local-signup', {
-        successRedirect: '/profile', // redirect to the secure profile section
-        failureRedirect: '/signup', // redirect back to the signup page if there is an error
-        failureFlash: true, // allow flash messages
-    }));
+    // process the login form
+    app.post('/signup', (req, res, next) => {
+
+        passport.authenticate('local-signup',  (err, user, info) => {
+
+            if (err) { return next(err); }
+
+                if (!user){
+                temp.message = info;
+                temp.status = '409';
+                temp.data = null;
+
+                return res.status(temp.status).json(temp);
+            }
+
+            req.logIn(user, { session: false }, function(err) {
+
+            if (err) { return next(err); }
+
+                temp.message = 'Successful Signup';
+                temp.status = '200';
+                temp.data = user;
+
+                console.log(req.session);
+
+                return res.status(temp.status).json(temp);
+            });
+        })(req, res, next);   
+    });
+
     
     // =====================================
     // PROFILE SECTION =========================
