@@ -258,7 +258,7 @@ module.exports = (app, passport, models) => {
 
             Tender.findAll({where: {clientId: req.params.id}}).then(function(clientTenders) {
 
-                if (clientTenders) {
+                if (clientTenders.length) {
                     temp.status = 200;
                     temp.message = 'Retreived all Tenders for Client ' + req.user.id;
                     temp.data = clientTenders;
@@ -273,6 +273,40 @@ module.exports = (app, passport, models) => {
                     .json(temp);
             })
         }
+    });
+
+    app.get('/tenders_main_category', function(req, res) {
+
+        var Tender = models.tender;
+        var SubCategory = models.sub_category;
+
+        var mainCategoryIds = req.query.mainCategoryId;
+
+        if (!Array.isArray(req.query.mainCategoryId)){
+            mainCategoryIds = Array.from(req.query.mainCategoryId);
+        }   
+
+        Tender.findAll({
+            include: [{
+                model: models.sub_category,
+                where: {mainCategoryId: {in: mainCategoryIds}}
+            }]
+        }).then(function(tenders) {
+            
+            temp.status = 200;
+                
+            if (tenders.length) {
+                temp.message = 'Tenders associated with the requested Main Categories';
+                temp.data = tenders;
+            }
+            else {
+                temp.message = 'No tenders for the requested Main Categories';
+                temp.data = null;
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        });
     });
 };
 
