@@ -13,6 +13,7 @@ const port = process.env.PORT || 8080;
 const passport = require('passport');
 const flash = require('connect-flash');
 const env = require('dotenv').load();
+const mailer = require('express-mailer');
 
 // set up our express application
 app.use(morgan('dev')); // log every request to the console
@@ -34,6 +35,17 @@ app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
 
+mailer.extend(app, {
+  from: 'Venderapp',
+  host: 'smtp.gmail.com', // hostname
+  secureConnection: true, // use SSL
+  port: 465, // port for secure SMTP
+  transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
+  auth: {
+  user: 'radienerga@gmail.com', // gmail id
+  pass: 'champions@1' // gmail password
+  }
+});
 
 //Models
 var models = require("./app/models");
@@ -46,6 +58,8 @@ require('./app/config/passport.js')(passport, models);
 models.sub_category.belongsTo(models.main_category);
 models.tender.belongsTo(models.client);
 models.tender.belongsTo(models.sub_category);
+models.verification.belongsTo(models.client);
+models.verification.belongsTo(models.vendor);
 
 //Sync Database
 models.sequelize.sync().then(function() {

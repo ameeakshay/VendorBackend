@@ -3,6 +3,8 @@
 //load bcrypt
 var bCrypt = require('bcrypt-nodejs');
 var crypto = require('crypto');
+
+var randomstring = require('randomstring');
  
  
 module.exports = function(passport, model) {
@@ -102,6 +104,13 @@ module.exports = function(passport, model) {
                     const random_id = crypto.randomBytes(16).toString('hex');
                     console.log(random_id);
 
+                    var permalink_local = req.body.username.toLowerCase().replace(' ', '').replace(/[^\w\s]/gi, '').trim();
+
+                    var verification_token = randomstring.generate({
+                        length: 64
+                    });
+
+                    console.log(permalink_local + verification_token);
                     var data = {
                         id: random_id, 
                         email: username,
@@ -115,6 +124,31 @@ module.exports = function(passport, model) {
                         }
 
                         if (newUser) {
+                            var Verification = model.verification;
+                                var verify_data = {
+                                    verify_token : verification_token,
+                                    permalink : permalink_local,
+                                    emailVerfied : false,
+                                    clientId : null,
+                                    vendorId : null
+                                }
+                                console.log("this is the one" + newUser.id + req.body.type);
+                                if(req.body.type == "client"){
+                                    verify_data.clientId = newUser.id;
+                                }
+                                else if(req.body.type == "vendor"){
+                                    verify_data.vendorId = newUser.id;
+                                }
+
+                                Verification.create(verify_data).then(function(newVerify, created) {
+                                    if (!newVerify) {
+                                        console.log("error");
+                                    }
+                                    if (newVerify) {
+                                        console.log(newVerify);
+                                    }
+                                }); 
+
                             return done(null, newUser);
                         }
                     });
@@ -163,6 +197,11 @@ module.exports = function(passport, model) {
                     });
                 }
 
+                if (!user.emailVerfied) {
+                    return done(null, false, {
+                        message: 'Email not verified!!'
+                    });
+                }
                 var userinfo = user.get();
                 return done(null, userinfo);
 

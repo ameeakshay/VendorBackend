@@ -82,12 +82,40 @@ module.exports = (app, passport, models) => {
 
             req.logIn(user, { session: false }, function(err) {
 
-            if (err) { return next(err); }
+                if (err) { return next(err); }
+
 
                 temp.message = 'Successful Signup';
                 temp.status = '200';
                 temp.data = user;
 
+                var Verification = models.verification;
+
+                Verification.findAll({
+                    where:{
+                        $or : [{clientId : user.id}, {vendorId : user.id}]
+                    }
+                    
+                }).then(function(verify) {
+                    console.log("enterred verification");
+                    console.log(verify)
+                    var mailOptions = {
+                        to: user.email,
+                        subject: 'Verification link',
+                        user: {
+                            login_link: verify.permalink,
+                            token: verify.verify_token
+                        }
+                    }
+
+                  //   app.mailer.send('email', mailOptions, function (err, message) {
+                  //       if (err) {
+                  //         console.log(err);
+                  //         return;
+                  //       }
+                  //       console.log("mail sent");
+                  // });
+                });
                 console.log(req.session);
 
                 return res.status(temp.status).json(temp);
@@ -95,6 +123,27 @@ module.exports = (app, passport, models) => {
         })(req, res, next);   
     });
 
+
+     app.get('/verification', function(req, res) {
+        var SubCategory = models.sub_category;
+
+        SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
+
+            temp.status = 200;
+            
+            if (!subCategories.length) {
+                temp.message = 'No Sub Categories Found';
+                temp.data = [];
+            }
+            else {
+                temp.message = 'Sub categories corresponding to Main Category #' + req.params.id;
+                temp.data = subCategories;   
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        })
+    });
     
     // =====================================
     // PROFILE SECTION =========================
