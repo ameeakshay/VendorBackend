@@ -214,7 +214,7 @@ module.exports = (app, passport, models) => {
 
         var Tender = models.tender;
 
-        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId) {
+        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.params.id == req.user.id) {
 
             var tenderData = {
                 tenderEnds: req.body.duration,
@@ -254,18 +254,18 @@ module.exports = (app, passport, models) => {
 
         var Tender = models.tender;
 
-        if (req.params.id) {
+        if (req.params.id && req.params.id == req.user.id) {
 
             Tender.findAll({where: {clientId: req.params.id}}).then(function(clientTenders) {
 
                 if (clientTenders.length) {
                     temp.status = 200;
-                    temp.message = 'Retreived all Tenders for Client ' + req.params.id;
+                    temp.message = 'Retreived all Tenders for Client ' + req.user.id;
                     temp.data = clientTenders;
                 }
                 else {
                     temp.status = 200;
-                    temp.message = 'Unable to find Tenders posted by Client ' + req.params.id;
+                    temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
                     temp.data = null;
                 }
 
