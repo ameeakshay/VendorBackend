@@ -210,7 +210,7 @@ module.exports = (app, passport, models) => {
         })
     });
 
-    app.post('/tender/:id', function(req, res) {
+    app.post('/tender/:id', isLoggedIn, function(req, res) {
 
         var Tender = models.tender;
 
@@ -255,7 +255,7 @@ module.exports = (app, passport, models) => {
         res.redirect('/');
     });
 
-    app.get('/client_tenders/:id', function(req, res) {
+    app.get('/client_tenders/:id', isLoggedIn, function(req, res) {
 
         var Tender = models.tender;
 

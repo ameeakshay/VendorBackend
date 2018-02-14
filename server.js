@@ -29,6 +29,10 @@ app.use(session({
     secret: 'vidyapathaisalwaysrunning',
     resave: true,
     saveUninitialized: true,
+    cookie: {
+        secure: false,
+        maxAge: 3600000 //1 hour
+    }
 })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
