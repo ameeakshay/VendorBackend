@@ -7,10 +7,13 @@ module.exports = (app, passport, models) => {
     // =====================================
 
     var temp = {
-        'status' : '',
+        'status' : 500,
         'message' : '',
         'data' : ''
     };
+
+    var bCrypt = require('bcrypt-nodejs');
+    var randomstring = require('randomstring');
 
     app.get('/', (req, res) => {
         res.render('index.ejs'); // load the index.ejs file
@@ -36,7 +39,7 @@ module.exports = (app, passport, models) => {
 
                 if (!user){
                 temp.message = 'Authentication Failed';
-                temp.status = '401';
+                temp.status = 401;
                 temp.data = null;
 
                 return res.status(temp.status).json(temp);
@@ -46,9 +49,22 @@ module.exports = (app, passport, models) => {
 
                 if (err) { return next(err); }
 
-                temp.message = 'Request Successfull';
-                temp.status = '200';
-                temp.data = user;
+                var Verify = models.verification;
+
+                Verify.findOne({where: {id : user.id}}).then(function(verify) {
+                
+                        temp.status = 200;
+                        console.log(verify);
+                        if (verify.emailverified) {
+                            temp.message = 'verified and logged in';
+                            temp.data = user;    
+                        }
+                        else { 
+                            temp.message = 'You are not verified, please verify your account.';
+                            temp.data = verify;   
+                        }
+
+                });
 
                 return res.status(temp.status).json(temp);
             });
@@ -74,7 +90,7 @@ module.exports = (app, passport, models) => {
 
                 if (!user){
                 temp.message = info;
-                temp.status = '409';
+                temp.status = 409;
                 temp.data = null;
 
                 return res.status(temp.status).json(temp);
@@ -84,65 +100,92 @@ module.exports = (app, passport, models) => {
 
                 if (err) { return next(err); }
 
+                var permalink_local = req.body.username.toLowerCase().replace(' ', '').replace(/[^\w\s]/gi, '').trim();
 
-                temp.message = 'Successful Signup';
-                temp.status = '200';
-                temp.data = user;
+                var token = randomstring.generate({
+                    length: 64
+                });
+
+                var link_data = {
+                    id : user.id,
+                    verify_token : token,
+                    permalink : permalink_local,
+                    emailverified : false
+                }
+                console.log(permalink_local +token);
+
+                var link = "http://localhost:8080/verification/" + permalink_local + "/" + token + "/" + user.id;
 
                 var Verification = models.verification;
+                temp.status = 200;
 
-                Verification.findAll({
-                    where:{
-                        $or : [{clientId : user.id}, {vendorId : user.id}]
-                    }
-                    
-                }).then(function(verify) {
-                    console.log("enterred verification");
-                    console.log(verify)
-                    var mailOptions = {
-                        to: user.email,
-                        subject: 'Verification link',
-                        user: {
-                            login_link: verify.permalink,
-                            token: verify.verify_token
-                        }
+                Verification.create(link_data).then(function(client) {
+
+                    if (!client) {
+                        console.log("error");
+                        temp.message = 'error with verification process';
+                        temp.data = null;
+
+                        return res.status(temp.status).json(temp);
                     }
 
-                  //   app.mailer.send('email', mailOptions, function (err, message) {
-                  //       if (err) {
-                  //         console.log(err);
-                  //         return;
-                  //       }
-                  //       console.log("mail sent");
-                  // });
+                    //console.log("added to verification");
+                    temp.message = 'Successful Signup and link generated';
+                    temp.data = user;
+                    console.log(temp.message);
                 });
+
+                console.log("this message is " + temp.message);
+                var mailOptions = {
+                    to: user.email,
+                    subject: 'Verification link',
+                    user: {
+                        login_link: link
+                    }
+                }
+
+                app.mailer.send('email', mailOptions, function (err, message) {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                    console.log("mail sent");
+                });
+
                 console.log(req.session);
 
-                return res.status(temp.status).json(temp);
+                return res.status(temp.status).json(temp);  
             });
-        })(req, res, next);   
+        })(req, res, next); 
     });
 
 
-     app.get('/verification', function(req, res) {
-        var SubCategory = models.sub_category;
+    app.get('/verification/:link/:token/:id', (req, res) => {
 
-        SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
+        var Verification = models.verification;
+
+        Verification.update({emailverified : true}, {where :{id : req.params.id, $and:[
+            {permalink : req.params.link}, 
+            {verify_token : req.params.token},
+            {emailverified : false}
+            ]}}).then(function(client) {
+
+            if(!client) {
+                temp.status = 500;
+                temp.message = 'verification unsuccessfull';
+                temp.data = null;
+
+                return res.status(temp.status)
+                    .json(temp);
+            }
 
             temp.status = 200;
-            
-            if (!subCategories.length) {
-                temp.message = 'No Sub Categories Found';
-                temp.data = [];
-            }
-            else {
-                temp.message = 'Sub categories corresponding to Main Category #' + req.params.id;
-                temp.data = subCategories;   
-            }
+            temp.message = 'The email for client' + req.params.id + 'is verified.';
+            temp.data = client;
+        });
+        res.status(temp.status)
+            .json(temp);
 
-            res.status(temp.status)
-                .json(temp);
-        })
     });
     
     // =====================================

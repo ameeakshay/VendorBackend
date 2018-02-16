@@ -14,10 +14,9 @@
         <div class="jumbotron text-center">
             <h1><span class="fa fa-lock"></span> Verification link</h1>
 
-            <p>Login or Register with:</p>
+            <p>Please click on the link below to verify your account:</p>
 
-            <a href="/login" class="btn btn-default"><span class="fa fa-user"></span><%= user.login_link %></a>
-            <a href="/signup" class="btn btn-default"><span class="fa fa-user"></span> Local Signup</a>
+            <a href="<%= user.login_link %>" class="btn btn-default"><span class="fa fa-user"></span><%= user.login_link %></a>
         </div>
     </div>
 </body>

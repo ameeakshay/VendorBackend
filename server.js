@@ -58,8 +58,6 @@ require('./app/config/passport.js')(passport, models);
 models.sub_category.belongsTo(models.main_category);
 models.tender.belongsTo(models.client);
 models.tender.belongsTo(models.sub_category);
-models.verification.belongsTo(models.client);
-models.verification.belongsTo(models.vendor);
 
 //Sync Database
 models.sequelize.sync().then(function() {

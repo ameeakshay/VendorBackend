@@ -5,8 +5,7 @@ module.exports = function(sequelize, Sequelize) {
  
         id: {
             primaryKey: true,
-            type: Sequelize.INTEGER,
-            autoIncrement: true
+            type: Sequelize.STRING
         },
  
         verify_token : {
@@ -22,7 +21,7 @@ module.exports = function(sequelize, Sequelize) {
         emailverified: {
           type: Sequelize.BOOLEAN,
           defaultValue: false,
-          allowNull: false,
+          allowNull: true,
           set: function(value) {
             if (value === 'true') value = true;
             if (value === 'false') value = false;
