@@ -18,17 +18,6 @@ module.exports = function(sequelize, Sequelize) {
         password: {
             type: Sequelize.STRING,
             allowNull: false
-        },
-
-        emailVerified: {
-          type: Sequelize.BOOLEAN,
-          defaultValue: false,
-          allowNull: false,
-          set: function(value) {
-            if (value === 'true') value = true;
-            if (value === 'false') value = false;
-            this.setDataValue('emailVerified', value);
-          }
         }
  
     });
