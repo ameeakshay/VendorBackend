@@ -302,11 +302,11 @@ module.exports = (app, passport, models) => {
         })
     });
 
-    app.post('/tender/:id', function(req, res) {
+    app.post('/tender/:id', isLoggedIn, function(req, res) {
 
         var Tender = models.tender;
 
-        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.user.id == req.params.id) {
+        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.params.id == req.user.id) {
 
             var tenderData = {
                 tenderEnds: req.body.duration,
@@ -327,11 +327,16 @@ module.exports = (app, passport, models) => {
                     temp.message = 'Unable to create the Tender';
                     temp.data = [];
                 }
-
-                res.status(temp.status)
-                    .json(temp);
             });
         }
+        else
+        {
+            temp.status = 403;
+            temp.message = 'You currently dont have access to the Client ' + req.params.id;
+            temp.data = null;
+        }
+        res.status(temp.status)
+            .json(temp);
     });
 
     // =====================================
@@ -342,7 +347,7 @@ module.exports = (app, passport, models) => {
         res.redirect('/');
     });
 
-    app.get('/client_tenders/:id', function(req, res) {
+    app.get('/client_tenders/:id', isLoggedIn, function(req, res) {
 
         var Tender = models.tender;
 
@@ -360,11 +365,17 @@ module.exports = (app, passport, models) => {
                     temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
                     temp.data = null;
                 }
-
-                res.status(temp.status)
-                    .json(temp);
             })
         }
+        else
+        {
+            temp.status = 403;
+            temp.message = 'You currently dont have access to the Client ' + req.params.id;
+            temp.data = null;
+        }
+
+        res.status(temp.status)
+            .json(temp);
     });
 
     app.get('/tenders_main_category', function(req, res) {
