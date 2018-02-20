@@ -152,15 +152,11 @@ module.exports = function(passport, model) {
             }).then(function(user) {
 
                 if (!user) {
-                    return done(null, false, {
-                        message: 'Email does not exist'
-                    });
+                    return done(null, false, 'Email does not exist');
                 }
 
                 if (!isValidPassword(user.password, password)) {
-                    return done(null, false, {
-                        message: 'Incorrect password.'
-                    });
+                    return done(null, false, 'Incorrect password');
                 }
 
                 var userinfo = user.get();
@@ -168,9 +164,7 @@ module.exports = function(passport, model) {
 
             }).catch(function(err) {
                 console.log("Error:", err);
-                return done(null, false, {
-                    message: 'Something went wrong with your Signin'
-                });
+                return done(null, false, 'Something went wrong with your Signin');
             });
         }
     ));

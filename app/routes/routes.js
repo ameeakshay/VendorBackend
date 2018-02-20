@@ -35,7 +35,7 @@ module.exports = (app, passport, models) => {
             if (err) { return next(err); }
 
                 if (!user){
-                temp.message = 'Authentication Failed';
+                temp.message = info;
                 temp.status = '401';
                 temp.data = null;
 
@@ -87,8 +87,6 @@ module.exports = (app, passport, models) => {
                 temp.message = 'Successful Signup';
                 temp.status = '200';
                 temp.data = user;
-
-                console.log(req.session);
 
                 return res.status(temp.status).json(temp);
             });
