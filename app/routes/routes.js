@@ -12,7 +12,6 @@ module.exports = (app, passport, models) => {
         'data' : ''
     };
 
-    var bCrypt = require('bcrypt-nodejs');
     var randomstring = require('randomstring');
 
     app.get('/', (req, res) => {
@@ -57,16 +56,19 @@ module.exports = (app, passport, models) => {
                         console.log(verify);
                         if (verify.emailverified) {
                             temp.message = 'verified and logged in';
-                            temp.data = user;    
+                            temp.data = user;
+
+                            return res.status(temp.status).json(temp);    
                         }
                         else { 
                             temp.message = 'You are not verified, please verify your account.';
-                            temp.data = verify;   
+                            temp.data = verify; 
+
+                            return res.status(temp.status).json(temp);  
                         }
 
                 });
 
-                return res.status(temp.status).json(temp);
             });
         })(req, res, next);   
     });
@@ -149,12 +151,11 @@ module.exports = (app, passport, models) => {
                         console.log(err);
                         return;
                     }
+                    return res.status(temp.status).json(temp);  
                     console.log("mail sent");
                 });
 
                 console.log(req.session);
-
-                return res.status(temp.status).json(temp);  
             });
         })(req, res, next); 
     });
@@ -180,11 +181,11 @@ module.exports = (app, passport, models) => {
             }
 
             temp.status = 200;
-            temp.message = 'The email for client' + req.params.id + 'is verified.';
+            temp.message = 'The email for client ' + req.params.id + ' is verified.';
             temp.data = client;
+
+            return res.status(temp.status).json(temp);
         });
-        res.status(temp.status)
-            .json(temp);
 
     });
     
@@ -221,7 +222,7 @@ module.exports = (app, passport, models) => {
                 temp.data = mainCategories;   
             }
 
-            res.status(temp.status)
+            return res.status(temp.status)
                 .json(temp);
         })
     });
@@ -249,7 +250,7 @@ module.exports = (app, passport, models) => {
                     temp.data = [];
                 }
 
-                res.status(temp.status)
+                return res.status(temp.status)
                     .json(temp);
             });
     });
@@ -270,7 +271,7 @@ module.exports = (app, passport, models) => {
                 temp.data = subCategories;   
             }
 
-            res.status(temp.status)
+            return res.status(temp.status)
                 .json(temp);
         })
     });
@@ -297,7 +298,7 @@ module.exports = (app, passport, models) => {
                     temp.data = [];
                 }
 
-                res.status(temp.status)
+                return res.status(temp.status)
                     .json(temp);
         })
     });
@@ -327,6 +328,8 @@ module.exports = (app, passport, models) => {
                     temp.message = 'Unable to create the Tender';
                     temp.data = [];
                 }
+                return res.status(temp.status)
+                    .json(temp);
             });
         }
         else
@@ -334,9 +337,11 @@ module.exports = (app, passport, models) => {
             temp.status = 403;
             temp.message = 'You currently dont have access to the Client ' + req.params.id;
             temp.data = null;
+
+            return res.status(temp.status)
+                    .json(temp);
         }
-        res.status(temp.status)
-            .json(temp);
+        
     });
 
     // =====================================
@@ -365,6 +370,8 @@ module.exports = (app, passport, models) => {
                     temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
                     temp.data = null;
                 }
+                return res.status(temp.status)
+                    .json(temp);
             })
         }
         else
@@ -372,13 +379,14 @@ module.exports = (app, passport, models) => {
             temp.status = 403;
             temp.message = 'You currently dont have access to the Client ' + req.params.id;
             temp.data = null;
+
+            return res.status(temp.status)
+                    .json(temp);
         }
 
-        res.status(temp.status)
-            .json(temp);
     });
 
-    app.get('/tenders_main_category', function(req, res) {
+    app.get('/tenders_main_category', isLoggedIn, function(req, res) {
 
         var Tender = models.tender;
         var SubCategory = models.sub_category;
@@ -407,7 +415,7 @@ module.exports = (app, passport, models) => {
                 temp.data = null;
             }
 
-            res.status(temp.status)
+            return res.status(temp.status)
                 .json(temp);
         });
     });
