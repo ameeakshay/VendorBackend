@@ -6,10 +6,10 @@ module.exports = (app, passport, models) => {
     // HOME PAGE (with login links) ========
     // =====================================
 
-    var temp = {
-        'status' : '',
-        'message' : '',
-        'data' : ''
+    var ResponseFormat = function() {
+        this.status = '',
+        this.message = '',
+        this.data = ''
     };
 
     app.get('/', (req, res) => {
@@ -28,6 +28,8 @@ module.exports = (app, passport, models) => {
 
     // process the login form
     app.post('/login', (req, res, next) => {
+
+        var temp = new ResponseFormat();
 
         passport.authenticate('local-login',  (err, user, info) => {
             console.log('hello');
@@ -67,6 +69,8 @@ module.exports = (app, passport, models) => {
 
     // process the login form
     app.post('/signup', (req, res, next) => {
+
+        var temp = new ResponseFormat();
 
         passport.authenticate('local-signup',  (err, user, info) => {
 
@@ -110,6 +114,8 @@ module.exports = (app, passport, models) => {
 
     //Route to get all the Main Categories
     app.get('/main_categories', (req, res) => {
+
+        var temp = new ResponseFormat();
         var MainCategory = models.main_category;
 
         console.log(req.user);
@@ -136,6 +142,8 @@ module.exports = (app, passport, models) => {
     //Route to create a main category...this will only be used by developers and Admin
     app.post('/main_categories', function(req, res) {
 
+        var temp = new ResponseFormat();
+
         var MainCategory = models.main_category;
 
             var data = {
@@ -161,6 +169,8 @@ module.exports = (app, passport, models) => {
     });
     //Route to get all the Sub Categories associated with a Main Category
     app.get('/sub_categories/:id', function(req, res) {
+
+        var temp = new ResponseFormat();
         var SubCategory = models.sub_category;
 
         SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
@@ -183,6 +193,8 @@ module.exports = (app, passport, models) => {
 
     //Route to create sub categories for a main category...for Developers and Admin usage only
     app.post('/sub_categories', function(req, res) {
+
+        var temp = new ResponseFormat();
         var SubCategory = models.sub_category;
 
         var data = {
@@ -210,9 +222,13 @@ module.exports = (app, passport, models) => {
 
     app.post('/tender/:id', isLoggedIn, function(req, res) {
 
+        var temp = new ResponseFormat();
+
         var Tender = models.tender;
 
         if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.params.id == req.user.id) {
+
+            console.log("Client:  " + req.params.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
 
             var tenderData = {
                 tenderEnds: req.body.duration,
@@ -233,6 +249,9 @@ module.exports = (app, passport, models) => {
                     temp.message = 'Unable to create the Tender';
                     temp.data = [];
                 }
+
+                res.status(temp.status)
+                    .json(temp);
             });
         }
         else
@@ -240,9 +259,10 @@ module.exports = (app, passport, models) => {
             temp.status = 403;
             temp.message = 'You currently dont have access to the Client ' + req.params.id;
             temp.data = null;
+
+            res.status(temp.status)
+                .json(temp);
         }
-        res.status(temp.status)
-            .json(temp);
     });
 
     // =====================================
@@ -254,6 +274,8 @@ module.exports = (app, passport, models) => {
     });
 
     app.get('/client_tenders/:id', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
 
         var Tender = models.tender;
 
@@ -271,6 +293,9 @@ module.exports = (app, passport, models) => {
                     temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
                     temp.data = null;
                 }
+                
+                res.status(temp.status)
+                    .json(temp);
             })
         }
         else
@@ -278,13 +303,15 @@ module.exports = (app, passport, models) => {
             temp.status = 403;
             temp.message = 'You currently dont have access to the Client ' + req.params.id;
             temp.data = null;
+                
+            res.status(temp.status)
+                .json(temp);
         }
-
-        res.status(temp.status)
-            .json(temp);
     });
 
     app.get('/tenders_main_category', function(req, res) {
+
+        var temp = new ResponseFormat();
 
         var Tender = models.tender;
         var SubCategory = models.sub_category;
