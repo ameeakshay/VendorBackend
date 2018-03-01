@@ -1,15 +1,32 @@
 // app/routes.js
 
-module.exports = (app, passport, models) => {
+//load bcrypt
+var bCrypt = require('bcrypt-nodejs');
+var crypto = require('crypto');
+var jwt = require('jsonwebtoken');
+
+module.exports = (app, models) => {
 
     // =====================================
     // HOME PAGE (with login links) ========
     // =====================================
 
+    var Client = models.client;
+    var Vendor = models.vendor;
+
     var ResponseFormat = function() {
         this.status = '',
         this.message = '',
         this.data = ''
+    };
+
+
+    var generateHash = function(password) {
+        return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
+    };
+
+    var isValidPassword = function(userpass, password) {
+        return bCrypt.compareSync(password, userpass);
     };
 
     app.get('/', (req, res) => {
@@ -31,30 +48,45 @@ module.exports = (app, passport, models) => {
 
         var temp = new ResponseFormat();
 
-        passport.authenticate('local-login',  (err, user, info) => {
-            console.log('hello');
+        var User;
 
-            if (err) { return next(err); }
+        if (req.body.type == 'client') {
+            console.log('client');
 
-                if (!user){
-                temp.message = info;
-                temp.status = '401';
+            User = Client;
+        }
+        else if (req.body.type == 'vendor'){
+            console.log('vendor');
+        
+            User = Vendor;
+        }
+
+        User.findOne({where: { email: req.body.username }}).then(function(user) {
+
+            if (!user) {
+                temp.status = 401;
+                temp.message = 'Authentication Failed. User not found!';
                 temp.data = null;
 
-                return res.status(temp.status).json(temp);
+                res.status(temp.status)
+                    .json(temp);
             }
 
-            req.logIn(user, function(err) {
+            else if (user) {
+                
+                if (!isValidPassword(user.password, req.body.password)) { 
+                    temp.status = 401;
+                    temp.message = 'Authentication Failed. Password Incorrect!';
+                    temp.data = null; 
 
-                if (err) { return next(err); }
-
-                temp.message = 'Request Successfull';
-                temp.status = '200';
-                temp.data = user;
-
-                return res.status(temp.status).json(temp);
-            });
-        })(req, res, next);   
+                     res.status(temp.status)
+                        .json(temp);
+                }
+                else {
+                    return res.json({token: jwt.sign({ email: user.email, _id: user.id }, 'ClientVendor')});
+                }
+            }
+        })
     });
 
 
@@ -72,29 +104,61 @@ module.exports = (app, passport, models) => {
 
         var temp = new ResponseFormat();
 
-        passport.authenticate('local-signup',  (err, user, info) => {
+        var User;
 
-            if (err) { return next(err); }
+        if (req.body.type == 'client') {
+            console.log('client');
 
-                if (!user){
-                temp.message = info;
-                temp.status = '409';
+            User = Client;
+        }
+        else if (req.body.type == 'vendor'){
+            console.log('vendor');
+        
+            User = Vendor;
+        }
+
+        User.findOne({ where: { email: req.body.username }}).then(function(user) {
+
+            if (user)
+            {
+                temp.status = 200;
+                temp.message = 'User already exists.';
                 temp.data = null;
 
-                return res.status(temp.status).json(temp);
+                res.status(temp.status)
+                    .json(temp);
+            } 
+            else {
+
+                var userPassword = generateHash(req.body.password);
+                const random_id = crypto.randomBytes(16).toString('hex');
+                console.log(random_id);
+
+                var data = {
+                    id: random_id, 
+                    email: req.body.username,
+                    password: userPassword
+                };
+
+                User.create(data).then(function(newUser) {
+                    
+                    if (!newUser) {
+                        temp.status = 200;
+                        temp.message = 'Unable to create the user.'
+                        temp.data = null;
+                    }
+
+                    if (newUser) {
+                        temp.status = 200;
+                        temp.message = 'User created Successfully.'
+                        temp.data = newUser;
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                });
             }
-
-            req.logIn(user, { session: false }, function(err) {
-
-            if (err) { return next(err); }
-
-                temp.message = 'Successful Signup';
-                temp.status = '200';
-                temp.data = user;
-
-                return res.status(temp.status).json(temp);
-            });
-        })(req, res, next);   
+        }); 
     });
 
     
@@ -109,7 +173,7 @@ module.exports = (app, passport, models) => {
         // });
         // res.send(user);
         console.log("This is the data to be displayed");
-        console.log(user.id);
+        console.log(user);
     });
 
     //Route to get all the Main Categories
@@ -350,7 +414,7 @@ module.exports = (app, passport, models) => {
 function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on
-    if (req.isAuthenticated()) return next();
+    if (req.user) return next();
 
     // if they aren't redirect them to the home page
     res.redirect('/');
