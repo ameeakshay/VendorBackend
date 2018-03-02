@@ -10,7 +10,6 @@ var jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 8080;
 
-const passport = require('passport');
 const flash = require('connect-flash');
 const env = require('dotenv').load();
 
