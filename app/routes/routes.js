@@ -83,7 +83,7 @@ module.exports = (app, models) => {
                         .json(temp);
                 }
                 else {
-                    return res.json({token: jwt.sign({ email: user.email, _id: user.id }, 'ClientVendor')});
+                    return res.json({token: jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
                 }
             }
         })
@@ -177,12 +177,10 @@ module.exports = (app, models) => {
     });
 
     //Route to get all the Main Categories
-    app.get('/main_categories', (req, res) => {
+    app.get('/main_categories', isLoggedIn, (req, res) => {
 
         var temp = new ResponseFormat();
         var MainCategory = models.main_category;
-
-        console.log(req.user);
 
         MainCategory.findAll().then(function(mainCategories) {
                 
@@ -232,7 +230,7 @@ module.exports = (app, models) => {
             });
     });
     //Route to get all the Sub Categories associated with a Main Category
-    app.get('/sub_categories/:id', function(req, res) {
+    app.get('/sub_categories/:id', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
         var SubCategory = models.sub_category;
@@ -284,20 +282,20 @@ module.exports = (app, models) => {
         })
     });
 
-    app.post('/tender/:id', isLoggedIn, function(req, res) {
+    app.post('/tender', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
 
         var Tender = models.tender;
 
-        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.params.id == req.user.id) {
+        if (req.user.id && req.body.duration && req.body.quantity && req.body.subCategoryId) {
 
-            console.log("Client:  " + req.params.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
+            console.log("Client:  " + req.user.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
 
             var tenderData = {
                 tenderEnds: req.body.duration,
                 quantity: req.body.quantity,
-                clientId: req.params.id,
+                clientId: req.user.id,
                 subCategoryId: req.body.subCategoryId
             };
 
@@ -321,7 +319,7 @@ module.exports = (app, models) => {
         else
         {
             temp.status = 403;
-            temp.message = 'You currently dont have access to the Client ' + req.params.id;
+            temp.message = 'Client needs to be logged in to post a Tender';
             temp.data = null;
 
             res.status(temp.status)
@@ -337,15 +335,15 @@ module.exports = (app, models) => {
         res.redirect('/');
     });
 
-    app.get('/client_tenders/:id', isLoggedIn, function(req, res) {
+    app.get('/client_tenders', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
 
         var Tender = models.tender;
 
-        if (req.params.id && req.params.id == req.user.id) {
+        if (req.user.id) {
 
-            Tender.findAll({where: {clientId: req.params.id}}).then(function(clientTenders) {
+            Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
                 if (clientTenders.length) {
                     temp.status = 200;
@@ -365,7 +363,7 @@ module.exports = (app, models) => {
         else
         {
             temp.status = 403;
-            temp.message = 'You currently dont have access to the Client ' + req.params.id;
+            temp.message = 'Client needs to be logged in to retrieve all the Tenders';
             temp.data = null;
                 
             res.status(temp.status)
