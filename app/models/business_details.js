@@ -1,7 +1,7 @@
 
 module.exports = function(sequelize, Sequelize) {
  
-    var Bank_Details = sequelize.define('bank_details', {
+    var Business_Details = sequelize.define('business_details', {
  
         id: {
             primaryKey: true,
@@ -26,10 +26,15 @@ module.exports = function(sequelize, Sequelize) {
         address: {
             type: Sequelize.STRING,
             allowNull: false
+        },
+
+        gstNumber: {
+            type: Sequelize.STRING,
+            allowNull: false
         }
  
     });
  
-    return Bank_Details;
+    return Business_Details;
  
 }
