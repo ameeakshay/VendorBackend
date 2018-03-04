@@ -137,7 +137,9 @@ module.exports = (app, models) => {
                 var data = {
                     id: random_id, 
                     email: req.body.username,
-                    password: userPassword
+                    password: userPassword,
+                    name: req.body.name,
+                    phoneNumber: req.body.phoneNumber
                 };
 
                 User.create(data).then(function(newUser) {
