@@ -428,18 +428,32 @@ module.exports = (app, models) => {
 
                 User.update({name: req.body.name, phoneNumber: req.body.phoneNumber, email: req.body.email}, {where: {id: req.user.id}}).then(function(updatedUser) {
                     if (updatedUser){
-                        temp.status = 200;
-                        temp.message = 'Basic Profile updated Successfully'
-                        temp.data = updatedUser;
+
+                        User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
+
+                            if (user) {
+                                temp.status = 200;
+                                temp.message = 'Basic Profile updated Successfully'
+                                temp.data = user;
+                            }
+                            else {
+                                temp.status = 200;
+                                temp.message = 'Unable to find the Updated User'
+                                temp.data = null;
+                            }
+
+                            res.status(temp.status)
+                                .json(temp);
+                        });
                     }
                     else {
                         temp.status = 400;
                         temp.message = 'Something went wrong with the update'
                         temp.data = null;
-                    }
 
-                    res.status(temp.status)
-                        .json(temp);
+                        res.status(temp.status)
+                            .json(temp);
+                    }
                 })
             }
             else {
