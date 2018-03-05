@@ -408,6 +408,50 @@ module.exports = (app, models) => {
                 .json(temp);
         });
     });
+
+    app.put('/update_basic_details', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
+
+        var User = null;
+
+        if (req.user.type == 'client') {
+            User = models.client;
+        }
+        else if (req.user.type == 'vendor') {
+            User = models.vendor;
+        }
+
+        if (User != null) {
+
+            if (req.body.name && req.body.phoneNumber && req.body.email) {
+
+                User.update({name: req.body.name, phoneNumber: req.body.phoneNumber, email: req.body.email}, {where: {id: req.user.id}}).then(function(updatedUser) {
+                    if (updatedUser){
+                        temp.status = 200;
+                        temp.message = 'Basic Profile updated Successfully'
+                        temp.data = updatedUser;
+                    }
+                    else {
+                        temp.status = 400;
+                        temp.message = 'Something went wrong with the update'
+                        temp.data = null;
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                })
+            }
+            else {
+                temp.status = 422;
+                temp.message = 'Missing Parameters!';
+                temp.data = req.body;
+
+                res.status(temp.status)
+                    .json(temp);
+            }
+        }
+    });
 };
 
 // route middleware to make sure
