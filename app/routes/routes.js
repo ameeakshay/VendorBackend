@@ -466,6 +466,53 @@ module.exports = (app, models) => {
             }
         }
     });
+
+    app.put('/update_business_details', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
+        var BusinessDetails = models.business_details;
+
+        if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber) {
+
+            var tempBusinessDetails = {
+                id: req.user.id,
+                bankName: req.body.bankName,
+                ifscCode: req.body.ifscCode,
+                bankBranch: req.body.bankBranch,
+                address: req.body.address,
+                gstNumber: req.body.gstNumber
+            };
+
+            BusinessDetails.upsert(tempBusinessDetails).then(function(created) {
+                
+                BusinessDetails.findById(req.user.id).then(function(user) {
+
+                    if (user) {
+                        temp.status = 200;
+                        temp.message = 'Business Profile updated Successfully'
+                        temp.data = user;
+                    }
+                    else {
+                        temp.status = 400;
+                        temp.message = 'Unable to find the Updated User'
+                        temp.data = null;
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                });
+            });
+        }
+        else {
+            temp.status = 422;
+            temp.message = 'Missing Parameters!';
+            temp.data = req.body;
+
+            res.status(temp.status)
+                .json(temp);
+        }
+
+    })
 };
 
 // route middleware to make sure
