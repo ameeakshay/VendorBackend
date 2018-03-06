@@ -31,6 +31,11 @@ module.exports = function(sequelize, Sequelize) {
         gstNumber: {
             type: Sequelize.STRING,
             allowNull: false
+        },
+
+        accountNumber: {
+            type: Sequelize.STRING,
+            allowNull: false
         }
  
     });

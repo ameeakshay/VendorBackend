@@ -472,7 +472,7 @@ module.exports = (app, models) => {
         var temp = new ResponseFormat();
         var BusinessDetails = models.business_details;
 
-        if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber) {
+        if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber && req.body.accountNumber) {
 
             var tempBusinessDetails = {
                 id: req.user.id,
@@ -480,7 +480,8 @@ module.exports = (app, models) => {
                 ifscCode: req.body.ifscCode,
                 bankBranch: req.body.bankBranch,
                 address: req.body.address,
-                gstNumber: req.body.gstNumber
+                gstNumber: req.body.gstNumber,
+                accountNumber: req.body.accountNumber
             };
 
             BusinessDetails.upsert(tempBusinessDetails).then(function(created) {
