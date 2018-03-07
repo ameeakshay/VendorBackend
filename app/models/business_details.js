@@ -1,37 +1,45 @@
 
 module.exports = function(sequelize, Sequelize) {
  
-    var Vendor = sequelize.define('vendor', {
+    var Business_Details = sequelize.define('business_details', {
  
         id: {
             primaryKey: true,
             type: Sequelize.STRING
         },
  
-        email: {
+        bankName: {
             type: Sequelize.STRING,
-            validate: {
-                isEmail: true
-            }
+            allowNull: false
         },
  
-        password: {
+        ifscCode: {
             type: Sequelize.STRING,
             allowNull: false
         },
 
-        name: {
+        bankBranch: {
             type: Sequelize.STRING,
             allowNull: false
         },
 
-        phoneNumber: {
+        address: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+
+        gstNumber: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+
+        accountNumber: {
             type: Sequelize.STRING,
             allowNull: false
         }
  
     });
  
-    return Vendor;
+    return Business_Details;
  
 }
