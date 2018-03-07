@@ -18,14 +18,14 @@ module.exports = function(sequelize, Sequelize) {
             allowNull: false
         },
 
-        emailverified: {
+        accountVerified: {
           type: Sequelize.BOOLEAN,
           defaultValue: false,
           allowNull: true,
           set: function(value) {
             if (value === 'true') value = true;
             if (value === 'false') value = false;
-            this.setDataValue('emailVerified', value);
+            this.setDataValue('accountVerified', value);
           }
         }
  
