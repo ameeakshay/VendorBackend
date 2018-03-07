@@ -91,7 +91,7 @@ module.exports = (app, models) => {
                         
                                 temp.status = 200;
                                 console.log(verify);
-                                if (!verify.emailverified) {
+                                if (!verify.accountVerified) {
                                     temp.message = 'You are not verified, please verify your account.';
                                     temp.data = verify; 
 
@@ -179,7 +179,7 @@ module.exports = (app, models) => {
                             id : newUser.id,
                             verify_token : token,
                             permalink : permalink_local,
-                            emailverified : false
+                            accountVerified : false
                         }
                         console.log(permalink_local +token);
 
@@ -214,15 +214,24 @@ module.exports = (app, models) => {
                                 filePath: "../../data/TnC.pdf" // stream this file
                             }]
                         }
-
-                        app.mailer.send('email', mailOptions, function (err, message) {
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
-                            console.log("mail sent");
-                            return res.status(temp.status).json(temp);  
-                        });
+                        if (req.body.type == 'client')
+                        {
+                            app.mailer.send('email', mailOptions, function (err, message) {
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
+                                console.log("mail sent");
+                                return res.status(temp.status).json(temp);  
+                            });
+                        }
+                        else
+                        {
+                            temp.message = 'Signup successfull, contact the admin for verification';
+                            temp.data = newUser;
+                            return res.status(temp.status).json(temp);
+                        }
+                        
                     }
 
                     
@@ -238,10 +247,10 @@ module.exports = (app, models) => {
 
         var Verification = models.verification;
 
-        Verification.update({emailverified : true}, {where :{id : req.params.id, $and:[
+        Verification.update({accountVerified : true}, {where :{id : req.params.id, $and:[
             {permalink : req.params.link}, 
             {verify_token : req.params.token},
-            {emailverified : false}
+            {accountVerified : false}
             ]}}).then(function(client) {
 
             if(!client) {
