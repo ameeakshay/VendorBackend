@@ -4,6 +4,7 @@
 var bCrypt = require('bcrypt-nodejs');
 var crypto = require('crypto');
 var jwt = require('jsonwebtoken');
+var randomstring = require('randomstring');
 
 module.exports = (app, models) => {
 
@@ -83,7 +84,22 @@ module.exports = (app, models) => {
                         .json(temp);
                 }
                 else {
-                    return res.json({token: jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+                
+                        var Verify = models.verification;
+
+                        Verify.findOne({where: {id : user.id}}).then(function(verify) {
+                        
+                                temp.status = 200;
+                                console.log(verify);
+                                if (!verify.emailverified) {
+                                    temp.message = 'You are not verified, please verify your account.';
+                                    temp.data = verify; 
+
+                                    return res.status(temp.status).json(temp);    
+                                }
+
+                                return res.json({token: jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+                        });
                 }
             }
         })
@@ -154,15 +170,99 @@ module.exports = (app, models) => {
                         temp.status = 200;
                         temp.message = 'User created Successfully.'
                         temp.data = newUser;
+
+                        var permalink_local = req.body.username.toLowerCase().replace(' ', '').replace(/[^\w\s]/gi, '').trim();
+
+                        var token = randomstring.generate({
+                            length: 64
+                        });
+
+                        var link_data = {
+                            id : newUser.id,
+                            verify_token : token,
+                            permalink : permalink_local,
+                            emailverified : false
+                        }
+                        console.log(permalink_local +token);
+
+                        var link = "http://localhost:8080/verification/" + permalink_local + "/" + token + "/" + newUser.id;
+
+                        var Verification = models.verification;
+                        temp.status = 200;
+
+                        Verification.create(link_data).then(function(client) {
+
+                            if (!client) {
+                                console.log("error");
+                                temp.message = 'error with verification process';
+                                temp.data = null;
+
+                                return res.status(temp.status).json(temp);
+                            }
+
+                            //console.log("added to verification");
+                            temp.message = 'Successful Signup and link generated';
+                            temp.data = newUser;
+                            console.log(temp.message);
+                        });
+
+                        var mailOptions = {
+                            to: newUser.email,
+                            subject: 'Verification link',
+                            user: {
+                                login_link: link
+                            },
+                            attachments: [{   // file on disk as an attachment
+                                filePath: "../../data/TnC.pdf" // stream this file
+                            }]
+                        }
+
+                        app.mailer.send('email', mailOptions, function (err, message) {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+                            console.log("mail sent");
+                            return res.status(temp.status).json(temp);  
+                        });
                     }
 
-                    res.status(temp.status)
-                        .json(temp);
+                    
                 });
             }
         }); 
     });
 
+
+    app.get('/verification/:link/:token/:id', (req, res) => {
+
+        var temp = new ResponseFormat();
+
+        var Verification = models.verification;
+
+        Verification.update({emailverified : true}, {where :{id : req.params.id, $and:[
+            {permalink : req.params.link}, 
+            {verify_token : req.params.token},
+            {emailverified : false}
+            ]}}).then(function(client) {
+
+            if(!client) {
+                temp.status = 500;
+                temp.message = 'verification unsuccessfull';
+                temp.data = null;
+
+                return res.status(temp.status)
+                    .json(temp);
+            }
+
+            temp.status = 200;
+            temp.message = 'The email for client ' + req.params.id + ' is verified.';
+            temp.data = client;
+
+            return res.status(temp.status).json(temp);
+        });
+
+    });
     
     // =====================================
     // PROFILE SECTION =========================

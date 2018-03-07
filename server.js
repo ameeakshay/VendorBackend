@@ -12,6 +12,8 @@ const port = process.env.PORT || 8080;
 
 const flash = require('connect-flash');
 const env = require('dotenv').load();
+const mailer = require('express-mailer');
+
 
 // set up our express application
 app.use(morgan('dev')); // log every request to the console
@@ -61,6 +63,18 @@ app.use(function(req, res, next) {
     }
 
     next();
+});
+
+mailer.extend(app, {
+  from: 'Venderapp',
+  host: 'smtp.gmail.com', // hostname
+  secureConnection: true, // use SSL
+  port: 465, // port for secure SMTP
+  transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
+  auth: {
+  user: 'radienerga@gmail.com', // gmail id
+  pass: 'champions@1' // gmail password
+  }
 });
 
 // routes ======================================================================
