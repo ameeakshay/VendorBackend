@@ -1,15 +1,33 @@
 // app/routes.js
 
-module.exports = (app, passport, models) => {
+//load bcrypt
+var bCrypt = require('bcrypt-nodejs');
+var crypto = require('crypto');
+var jwt = require('jsonwebtoken');
+var randomstring = require('randomstring');
+
+module.exports = (app, models) => {
 
     // =====================================
     // HOME PAGE (with login links) ========
     // =====================================
 
+    var Client = models.client;
+    var Vendor = models.vendor;
+
     var ResponseFormat = function() {
         this.status = '',
         this.message = '',
         this.data = ''
+    };
+
+
+    var generateHash = function(password) {
+        return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
+    };
+
+    var isValidPassword = function(userpass, password) {
+        return bCrypt.compareSync(password, userpass);
     };
 
     app.get('/', (req, res) => {
@@ -31,30 +49,61 @@ module.exports = (app, passport, models) => {
 
         var temp = new ResponseFormat();
 
-        passport.authenticate('local-login',  (err, user, info) => {
-            console.log('hello');
+        var User;
 
-            if (err) { return next(err); }
+        if (req.body.type == 'client') {
+            console.log('client');
 
-                if (!user){
-                temp.message = info;
-                temp.status = '401';
+            User = Client;
+        }
+        else if (req.body.type == 'vendor'){
+            console.log('vendor');
+        
+            User = Vendor;
+        }
+
+        User.findOne({where: { email: req.body.username }}).then(function(user) {
+
+            if (!user) {
+                temp.status = 401;
+                temp.message = 'Authentication Failed. User not found!';
                 temp.data = null;
 
-                return res.status(temp.status).json(temp);
+                res.status(temp.status)
+                    .json(temp);
             }
 
-            req.logIn(user, function(err) {
+            else if (user) {
+                
+                if (!isValidPassword(user.password, req.body.password)) { 
+                    temp.status = 401;
+                    temp.message = 'Authentication Failed. Password Incorrect!';
+                    temp.data = null; 
 
-                if (err) { return next(err); }
+                     res.status(temp.status)
+                        .json(temp);
+                }
+                else {
+                
+                        var Verify = models.verification;
 
-                temp.message = 'Request Successfull';
-                temp.status = '200';
-                temp.data = user;
+                        Verify.findOne({where: {id : user.id}}).then(function(verify) {
+                        
+                                temp.status = 200;
+                                console.log(verify);
+                                if (!verify.accountVerified) {
+                                    temp.status = 403;
+                                    temp.message = 'You are not verified, please verify your account.';
+                                    temp.data = verify; 
 
-                return res.status(temp.status).json(temp);
-            });
-        })(req, res, next);   
+                                    return res.status(temp.status).json(temp);    
+                                }
+
+                                return res.json({token: jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+                        });
+                }
+            }
+        })
     });
 
 
@@ -72,31 +121,158 @@ module.exports = (app, passport, models) => {
 
         var temp = new ResponseFormat();
 
-        passport.authenticate('local-signup',  (err, user, info) => {
+        var User;
 
-            if (err) { return next(err); }
+        if (req.body.type == 'client') {
+            console.log('client');
 
-                if (!user){
-                temp.message = info;
-                temp.status = '409';
+            User = Client;
+        }
+        else if (req.body.type == 'vendor'){
+            console.log('vendor');
+        
+            User = Vendor;
+        }
+
+        User.findOne({ where: { email: req.body.username }}).then(function(user) {
+
+            if (user)
+            {
+                temp.status = 200;
+                temp.message = 'User already exists.';
                 temp.data = null;
 
-                return res.status(temp.status).json(temp);
+                res.status(temp.status)
+                    .json(temp);
+            } 
+            else {
+
+                var userPassword = generateHash(req.body.password);
+                const random_id = crypto.randomBytes(16).toString('hex');
+                console.log(random_id);
+
+                var data = {
+                    id: random_id, 
+                    email: req.body.username,
+                    password: userPassword,
+                    name: req.body.name,
+                    phoneNumber: req.body.phoneNumber
+                };
+
+                User.create(data).then(function(newUser) {
+                    
+                    if (!newUser) {
+                        temp.status = 200;
+                        temp.message = 'Unable to create the user.'
+                        temp.data = null;
+                    }
+
+                    if (newUser) {
+                        temp.status = 200;
+                        temp.message = 'User created Successfully.'
+                        temp.data = newUser;
+
+                        var permalink_local = req.body.username.toLowerCase().replace(' ', '').replace(/[^\w\s]/gi, '').trim();
+
+                        var token = randomstring.generate({
+                            length: 64
+                        });
+
+                        var link_data = {
+                            id : newUser.id,
+                            verify_token : token,
+                            permalink : permalink_local,
+                            accountVerified : false
+                        }
+                        console.log(permalink_local +token);
+
+                        var link = "http://localhost:8080/verification/" + permalink_local + "/" + token + "/" + newUser.id;
+
+                        var Verification = models.verification;
+                        temp.status = 200;
+
+                        Verification.create(link_data).then(function(client) {
+
+                            if (!client) {
+                                console.log("error");
+                                temp.message = 'error with verification process';
+                                temp.data = null;
+
+                                return res.status(temp.status).json(temp);
+                            }
+
+                            //console.log("added to verification");
+                            temp.message = 'Successful Signup and link generated';
+                            temp.data = newUser;
+                            console.log(temp.message);
+                        });
+
+                        var mailOptions = {
+                            to: newUser.email,
+                            subject: 'Verification link',
+                            user: {
+                                login_link: link
+                            },
+                            attachments: [{   // file on disk as an attachment
+                                filePath: "../../data/TnC.pdf" // stream this file
+                            }]
+                        }
+                        if (req.body.type == 'client')
+                        {
+                            app.mailer.send('email', mailOptions, function (err, message) {
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
+                                console.log("mail sent");
+                                return res.status(temp.status).json(temp);  
+                            });
+                        }
+                        else
+                        {
+                            temp.message = 'Signup successfull, contact the admin for verification';
+                            temp.data = newUser;
+                            return res.status(temp.status).json(temp);
+                        }
+                        
+                    }
+
+                    
+                });
             }
-
-            req.logIn(user, { session: false }, function(err) {
-
-            if (err) { return next(err); }
-
-                temp.message = 'Successful Signup';
-                temp.status = '200';
-                temp.data = user;
-
-                return res.status(temp.status).json(temp);
-            });
-        })(req, res, next);   
+        }); 
     });
 
+
+    app.get('/verification/:link/:token/:id', (req, res) => {
+
+        var temp = new ResponseFormat();
+
+        var Verification = models.verification;
+
+        Verification.update({accountVerified : true}, {where :{id : req.params.id, $and:[
+            {permalink : req.params.link}, 
+            {verify_token : req.params.token},
+            {accountVerified : false}
+            ]}}).then(function(client) {
+
+            if(!client) {
+                temp.status = 500;
+                temp.message = 'verification unsuccessfull';
+                temp.data = null;
+
+                return res.status(temp.status)
+                    .json(temp);
+            }
+
+            temp.status = 200;
+            temp.message = 'The email for client ' + req.params.id + ' is verified.';
+            temp.data = client;
+
+            return res.status(temp.status).json(temp);
+        });
+
+    });
     
     // =====================================
     // PROFILE SECTION =========================
@@ -109,16 +285,14 @@ module.exports = (app, passport, models) => {
         // });
         // res.send(user);
         console.log("This is the data to be displayed");
-        console.log(user.id);
+        console.log(user);
     });
 
     //Route to get all the Main Categories
-    app.get('/main_categories', (req, res) => {
+    app.get('/main_categories', isLoggedIn, (req, res) => {
 
         var temp = new ResponseFormat();
         var MainCategory = models.main_category;
-
-        console.log(req.user);
 
         MainCategory.findAll().then(function(mainCategories) {
                 
@@ -168,7 +342,7 @@ module.exports = (app, passport, models) => {
             });
     });
     //Route to get all the Sub Categories associated with a Main Category
-    app.get('/sub_categories/:id', function(req, res) {
+    app.get('/sub_categories/:id', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
         var SubCategory = models.sub_category;
@@ -220,20 +394,20 @@ module.exports = (app, passport, models) => {
         })
     });
 
-    app.post('/tender/:id', isLoggedIn, function(req, res) {
+    app.post('/tender', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
 
         var Tender = models.tender;
 
-        if (req.params.id && req.body.duration && req.body.quantity && req.body.subCategoryId && req.params.id == req.user.id) {
+        if (req.user.id && req.body.duration && req.body.quantity && req.body.subCategoryId) {
 
-            console.log("Client:  " + req.params.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
+            console.log("Client:  " + req.user.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
 
             var tenderData = {
                 tenderEnds: req.body.duration,
                 quantity: req.body.quantity,
-                clientId: req.params.id,
+                clientId: req.user.id,
                 subCategoryId: req.body.subCategoryId
             };
 
@@ -257,7 +431,7 @@ module.exports = (app, passport, models) => {
         else
         {
             temp.status = 403;
-            temp.message = 'You currently dont have access to the Client ' + req.params.id;
+            temp.message = 'Client needs to be logged in to post a Tender';
             temp.data = null;
 
             res.status(temp.status)
@@ -273,15 +447,15 @@ module.exports = (app, passport, models) => {
         res.redirect('/');
     });
 
-    app.get('/client_tenders/:id', isLoggedIn, function(req, res) {
+    app.get('/client_tenders', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
 
         var Tender = models.tender;
 
-        if (req.params.id && req.params.id == req.user.id) {
+        if (req.user.id) {
 
-            Tender.findAll({where: {clientId: req.params.id}}).then(function(clientTenders) {
+            Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
                 if (clientTenders.length) {
                     temp.status = 200;
@@ -301,7 +475,7 @@ module.exports = (app, passport, models) => {
         else
         {
             temp.status = 403;
-            temp.message = 'You currently dont have access to the Client ' + req.params.id;
+            temp.message = 'Client needs to be logged in to retrieve all the Tenders';
             temp.data = null;
                 
             res.status(temp.status)
@@ -344,13 +518,119 @@ module.exports = (app, passport, models) => {
                 .json(temp);
         });
     });
+
+    app.put('/update_basic_details', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
+
+        var User = null;
+
+        if (req.user.type == 'client') {
+            User = models.client;
+        }
+        else if (req.user.type == 'vendor') {
+            User = models.vendor;
+        }
+
+        if (User != null) {
+
+            if (req.body.name && req.body.phoneNumber && req.body.email) {
+
+                User.update({name: req.body.name, phoneNumber: req.body.phoneNumber, email: req.body.email}, {where: {id: req.user.id}}).then(function(updatedUser) {
+                    if (updatedUser){
+
+                        User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
+
+                            if (user) {
+                                temp.status = 200;
+                                temp.message = 'Basic Profile updated Successfully'
+                                temp.data = user;
+                            }
+                            else {
+                                temp.status = 200;
+                                temp.message = 'Unable to find the Updated User'
+                                temp.data = null;
+                            }
+
+                            res.status(temp.status)
+                                .json(temp);
+                        });
+                    }
+                    else {
+                        temp.status = 400;
+                        temp.message = 'Something went wrong with the update'
+                        temp.data = null;
+
+                        res.status(temp.status)
+                            .json(temp);
+                    }
+                })
+            }
+            else {
+                temp.status = 422;
+                temp.message = 'Missing Parameters!';
+                temp.data = req.body;
+
+                res.status(temp.status)
+                    .json(temp);
+            }
+        }
+    });
+
+    app.put('/update_business_details', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
+        var BusinessDetails = models.business_details;
+
+        if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber && req.body.accountNumber) {
+
+            var tempBusinessDetails = {
+                id: req.user.id,
+                bankName: req.body.bankName,
+                ifscCode: req.body.ifscCode,
+                bankBranch: req.body.bankBranch,
+                address: req.body.address,
+                gstNumber: req.body.gstNumber,
+                accountNumber: req.body.accountNumber
+            };
+
+            BusinessDetails.upsert(tempBusinessDetails).then(function(created) {
+                
+                BusinessDetails.findById(req.user.id).then(function(user) {
+
+                    if (user) {
+                        temp.status = 200;
+                        temp.message = 'Business Profile updated Successfully'
+                        temp.data = user;
+                    }
+                    else {
+                        temp.status = 400;
+                        temp.message = 'Unable to find the Updated User'
+                        temp.data = null;
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                });
+            });
+        }
+        else {
+            temp.status = 422;
+            temp.message = 'Missing Parameters!';
+            temp.data = req.body;
+
+            res.status(temp.status)
+                .json(temp);
+        }
+
+    })
 };
 
 // route middleware to make sure
 function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on
-    if (req.isAuthenticated()) return next();
+    if (req.user) return next();
 
     // if they aren't redirect them to the home page
     res.redirect('/');

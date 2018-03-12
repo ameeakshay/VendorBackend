@@ -18,6 +18,16 @@ module.exports = function(sequelize, Sequelize) {
         password: {
             type: Sequelize.STRING,
             allowNull: false
+        },
+
+        name: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+
+        phoneNumber: {
+            type: Sequelize.STRING,
+            allowNull: false
         }
  
     });
