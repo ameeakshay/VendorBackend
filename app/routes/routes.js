@@ -89,7 +89,6 @@ module.exports = (app, models) => {
 
                         Verify.findOne({where: {id : user.id}}).then(function(verify) {
                         
-                                temp.status = 200;
                                 console.log(verify);
                                 if (!verify.accountVerified) {
                                     temp.status = 403;
@@ -98,8 +97,11 @@ module.exports = (app, models) => {
 
                                     return res.status(temp.status).json(temp);    
                                 }
+                                temp.status = 200;
+                                temp.message = 'User logged in Successfully';
+                                temp.data = {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')};
 
-                                return res.json({token: jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+                                return res.status(temp.status).json(temp);
                         });
                 }
             }
