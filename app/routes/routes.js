@@ -227,13 +227,14 @@ module.exports = (app, models) => {
                                     return;
                                 }
                                 console.log("mail sent");
+                                temp.data = {"id": newUser.id, "email":newUser.email, "type": req.body.type};
                                 return res.status(temp.status).json(temp);  
                             });
                         }
                         else
                         {
                             temp.message = 'Signup successfull, contact the admin for verification';
-                            temp.data = newUser;
+                            temp.data = {"id": newUser.id, "email":newUser.email, "type": req.body.type};
                             return res.status(temp.status).json(temp);
                         }
                         
