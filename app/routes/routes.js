@@ -522,6 +522,41 @@ module.exports = (app, models) => {
         });
     });
 
+
+    app.get('/basic_details', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
+
+        var User = null;
+
+        if (req.user.type == 'client') {
+            User = models.client;
+        }
+        else if (req.user.type == 'vendor') {
+            User = models.vendor;
+        }
+
+        if (User != null) {
+
+            User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
+
+                if (user) {
+                    temp.status = 200;
+                    temp.message = 'Basic Profile for ' + req.user.email;
+                    temp.data = user;
+                }
+                else {
+                    temp.status = 200;
+                    temp.message = 'Unable to retrieve the Basic Profile for ' + req.user.email;
+                    temp.data = null;
+                }
+
+                res.status(temp.status)
+                    .json(temp);
+            });
+        }
+    });
+
     app.put('/update_basic_details', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
@@ -627,6 +662,31 @@ module.exports = (app, models) => {
         }
 
     })
+
+
+    app.get('/business_details', isLoggedIn, function(req, res) {
+
+        var temp = new ResponseFormat();
+
+        var BusinessDetails = models.business_details;
+
+        BusinessDetails.findById(req.user.id).then(function(user) {
+
+            if (user) {
+                temp.status = 200;
+                temp.message = 'Business Profile for ' + req.user.email;
+                temp.data = user;
+            }
+            else {
+                temp.status = 200;
+                temp.message = 'Unable to retrieve the Business Profile for ' + req.user.email
+                temp.data = null;
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        });
+    });
 };
 
 // route middleware to make sure
