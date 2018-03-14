@@ -557,7 +557,7 @@ module.exports = (app, models) => {
         }
     });
 
-    app.put('/update_basic_details', isLoggedIn, function(req, res) {
+    app.put('/basic_details', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
 
@@ -615,7 +615,7 @@ module.exports = (app, models) => {
         }
     });
 
-    app.put('/update_business_details', isLoggedIn, function(req, res) {
+    app.put('/business_details', isLoggedIn, function(req, res) {
 
         var temp = new ResponseFormat();
         var BusinessDetails = models.business_details;
