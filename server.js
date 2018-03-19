@@ -75,8 +75,7 @@ mailer.extend(app, {
   }
 });
 
-// routes ======================================================================
-require('./app/routes/routes.js')(app, models); // load our routes and pass in our app
+require('./app/routes/index.js')(app);
 
 // launch ======================================================================
 app.listen(port);
