@@ -4,11 +4,9 @@ var models = require('../models');
 
 exports.add_tender = function(req, res) {
 
-    var temp = new common.ResponseFormat();
-
     var Tender = models.tender;
 
-    if (req.user.id && req.body.duration && req.body.quantity && req.body.subCategoryId) {
+    if (req.body.duration && req.body.quantity && req.body.subCategoryId) {
 
         console.log("Client:  " + req.user.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
 
@@ -20,6 +18,9 @@ exports.add_tender = function(req, res) {
         };
 
         Tender.create(tenderData).then(function(newTender) {
+
+
+            temp = common.ResponseFormat(201, '', []);
 
             if (newTender) {
                 temp.status = 201;
@@ -37,19 +38,14 @@ exports.add_tender = function(req, res) {
         });
     }
     else
-    {
-        temp.status = 403;
-        temp.message = 'Client needs to be logged in to post a Tender';
-        temp.data = null;
-
+    {   
+        temp = common.ResponseFormat(422, 'Missing Parameters!', req.body);
         res.status(temp.status)
             .json(temp);
     }
 };
 
 exports.get_main_category_tenders = function(req, res) {
-
-    var temp = new common.ResponseFormat();
 
     var Tender = models.tender;
     var SubCategory = models.sub_category;
@@ -67,15 +63,14 @@ exports.get_main_category_tenders = function(req, res) {
         }]
     }).then(function(tenders) {
         
-        temp.status = 200;
-            
+        temp = common.ResponseFormat(200, '', []);            
+        
         if (tenders.length) {
             temp.message = 'Tenders associated with the requested Main Categories';
             temp.data = tenders;
         }
         else {
             temp.message = 'No tenders for the requested Main Categories';
-            temp.data = null;
         }
 
         res.status(temp.status)
@@ -85,36 +80,21 @@ exports.get_main_category_tenders = function(req, res) {
 
 exports.get_client_tenders = function(req, res) {
 
-    var temp = new common.ResponseFormat();
-
     var Tender = models.tender;
 
-    if (req.user.id) {
+    Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
-        Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
+        temp = common.ResponseFormat(200, '', []);
 
-            if (clientTenders.length) {
-                temp.status = 200;
-                temp.message = 'Retreived all Tenders for Client ' + req.user.id;
-                temp.data = clientTenders;
-            }
-            else {
-                temp.status = 200;
-                temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
-                temp.data = null;
-            }
-            
-            res.status(temp.status)
-                .json(temp);
-        })
-    }
-    else
-    {
-        temp.status = 403;
-        temp.message = 'Client needs to be logged in to retrieve all the Tenders';
-        temp.data = null;
-            
+        if (clientTenders.length) {
+            temp.message = 'Retreived all Tenders for Client ' + req.user.id;
+            temp.data = clientTenders;
+        }
+        else {
+            temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
+        }
+        
         res.status(temp.status)
             .json(temp);
-    }
+    })
 };

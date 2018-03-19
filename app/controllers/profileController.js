@@ -4,8 +4,6 @@ var models = require('../models');
 
 exports.get_basic_details = function(req, res) {
 
-    var temp = new common.ResponseFormat();
-
     var User = null;
 
     if (req.user.type == 'client') {
@@ -19,15 +17,15 @@ exports.get_basic_details = function(req, res) {
 
         User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
 
+
+            temp = common.ResponseFormat(200, '', []);
+
             if (user) {
-                temp.status = 200;
                 temp.message = 'Basic Profile for ' + req.user.email;
                 temp.data = user;
             }
             else {
-                temp.status = 200;
                 temp.message = 'Unable to retrieve the Basic Profile for ' + req.user.email;
-                temp.data = null;
             }
 
             res.status(temp.status)
@@ -37,8 +35,6 @@ exports.get_basic_details = function(req, res) {
 };
 
 exports.update_basic_details = function(req, res) {
-
-    var temp = new common.ResponseFormat();
 
     var User = null;
 
@@ -58,15 +54,14 @@ exports.update_basic_details = function(req, res) {
 
                     User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
 
+                        temp = common.ResponseFormat(200, '', []);
+
                         if (user) {
-                            temp.status = 200;
                             temp.message = 'Basic Profile updated Successfully'
                             temp.data = user;
                         }
                         else {
-                            temp.status = 200;
                             temp.message = 'Unable to find the Updated User'
-                            temp.data = null;
                         }
 
                         res.status(temp.status)
@@ -74,9 +69,8 @@ exports.update_basic_details = function(req, res) {
                     });
                 }
                 else {
-                    temp.status = 400;
-                    temp.message = 'Something went wrong with the update'
-                    temp.data = null;
+                    
+                    temp = common.ResponseFormat(400, 'Something went wrong with the update.', []);
 
                     res.status(temp.status)
                         .json(temp);
@@ -96,21 +90,18 @@ exports.update_basic_details = function(req, res) {
 
 exports.get_business_details = function(req, res) {
 
-    var temp = new common.ResponseFormat();
-
     var BusinessDetails = models.business_details;
 
     BusinessDetails.findById(req.user.id).then(function(user) {
 
+        temp = common.ResponseFormat(200, '', []);
+
         if (user) {
-            temp.status = 200;
             temp.message = 'Business Profile for ' + req.user.email;
             temp.data = user;
         }
         else {
-            temp.status = 200;
-            temp.message = 'Unable to retrieve the Business Profile for ' + req.user.email
-            temp.data = null;
+            temp.message = 'Unable to retrieve the Business Profile for ' + req.user.email;
         }
 
         res.status(temp.status)
@@ -120,7 +111,6 @@ exports.get_business_details = function(req, res) {
 
 exports.update_business_details = function(req, res) {
 
-    var temp = new common.ResponseFormat();
     var BusinessDetails = models.business_details;
 
     if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber && req.body.accountNumber) {
@@ -139,6 +129,8 @@ exports.update_business_details = function(req, res) {
             
             BusinessDetails.findById(req.user.id).then(function(user) {
 
+                temp = common.ResponseFormat(200, '', []);
+
                 if (user) {
                     temp.status = 200;
                     temp.message = 'Business Profile updated Successfully'
@@ -156,9 +148,8 @@ exports.update_business_details = function(req, res) {
         });
     }
     else {
-        temp.status = 422;
-        temp.message = 'Missing Parameters!';
-        temp.data = req.body;
+            
+        temp = common.ResponseFormat(422, 'Missing Parameters!', req.body);
 
         res.status(temp.status)
             .json(temp);

@@ -1,9 +1,15 @@
 var bCrypt = require('bcrypt-nodejs');
 
-exports.ResponseFormat = function() {
-    this.status = '',
-    this.message = '',
-    this.data = ''
+exports.ResponseFormat = function(status, message, data) {
+    
+	response = {}
+
+    response.status = status,
+    response.message = message,
+    response.data = data
+
+    return response;
+
 };
 
 exports.generateHash = function(password) {

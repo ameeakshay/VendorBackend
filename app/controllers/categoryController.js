@@ -4,12 +4,11 @@ var models = require('../models');
 
 exports.get_main_categories = function(req, res) {
 
-    var temp = new common.ResponseFormat();
     var MainCategory = models.main_category;
 
     MainCategory.findAll().then(function(mainCategories) {
-            
-        temp.status = 200;
+        
+        temp = common.ResponseFormat(200, '', []);
 
         if (!mainCategories.length) {
             temp.message = 'No Main Categories Found';
@@ -27,8 +26,6 @@ exports.get_main_categories = function(req, res) {
 
 exports.add_main_category = function(req, res) {
 
-    var temp = new common.ResponseFormat();
-
     var MainCategory = models.main_category;
 
         var data = {
@@ -37,8 +34,9 @@ exports.add_main_category = function(req, res) {
 
         MainCategory.create(data).then(function(mainCategory) {
 
+            temp = common.ResponseFormat(201, '', []);
+            
             if (mainCategory) {
-                temp.status = 201;
                 temp.message = 'Successfully created the categorY';
                 temp.data = mainCategory;
             }
@@ -55,12 +53,12 @@ exports.add_main_category = function(req, res) {
 
 exports.get_sub_categories = function(req, res) {
 
-    var temp = new common.ResponseFormat();
     var SubCategory = models.sub_category;
 
     SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
 
-        temp.status = 200;
+
+        temp = common.ResponseFormat(200, '', []);
         
         if (!subCategories.length) {
             temp.message = 'No Sub Categories Found';
@@ -78,7 +76,6 @@ exports.get_sub_categories = function(req, res) {
 
 exports.add_sub_category = function(req, res) {
 
-    var temp = new common.ResponseFormat();
     var SubCategory = models.sub_category;
 
     var data = {
@@ -87,6 +84,9 @@ exports.add_sub_category = function(req, res) {
         };
 
     SubCategory.create(data).then(function(subCategory) {
+
+
+        temp = common.ResponseFormat(201, '', []);
 
         if (subCategory) {
                 temp.status = 201;

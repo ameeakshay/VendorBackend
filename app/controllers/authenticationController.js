@@ -1,4 +1,4 @@
-
+    
 
 var crypto = require('crypto');
 var jwt = require('jsonwebtoken');
@@ -7,12 +7,10 @@ var randomstring = require('randomstring');
 var common = require('../common/common.js');
 var models = require('../models');
 
+var Client = models.client;
+var Vendor = models.vendor;
+
 exports.login = function(req, res) {
-
-    var temp = new common.ResponseFormat();
-
-    var Client = models.client;
-    var Vendor = models.vendor;
 
     var User;
 
@@ -30,9 +28,8 @@ exports.login = function(req, res) {
     User.findOne({where: { email: req.body.username }}).then(function(user) {
 
         if (!user) {
-            temp.status = 401;
-            temp.message = 'Authentication Failed. User not found!';
-            temp.data = null;
+
+            temp = common.ResponseFormat(401, 'Authentication Failed. User not found!', []);
 
             res.status(temp.status)
                 .json(temp);
@@ -41,9 +38,8 @@ exports.login = function(req, res) {
         else if (user) {
             
             if (!common.isValidPassword(user.password, req.body.password)) { 
-                temp.status = 401;
-                temp.message = 'Authentication Failed. Password Incorrect!';
-                temp.data = null; 
+
+                temp = common.ResponseFormat(401, 'Authentication Failed. Password Incorrect!', []);
 
                  res.status(temp.status)
                     .json(temp);
@@ -56,17 +52,17 @@ exports.login = function(req, res) {
                     
                             console.log(verify);
                             if (!verify.accountVerified) {
-                                temp.status = 403;
-                                temp.message = 'You are not verified, please verify your account.';
-                                temp.data = verify; 
 
-                                return res.status(temp.status).json(temp);    
+                                temp = common.ResponseFormat(403, 'Please complete the verification before logging in!', verify)
+
+                                return res.status(temp.status)
+                                            .json(temp);    
                             }
-                            temp.status = 200;
-                            temp.message = 'User logged in Successfully';
-                            temp.data = {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')};
 
-                            return res.status(temp.status).json(temp);
+                            temp = common.ResponseFormat(200, 'User logged in Successfully', {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+
+                            return res.status(temp.status)
+                                        .json(temp);
                     });
             }
         }
@@ -74,8 +70,6 @@ exports.login = function(req, res) {
 };
 
 exports.signup = function(req, res) {
-
-    var temp = new common.ResponseFormat();
 
     var User;
 
@@ -94,9 +88,8 @@ exports.signup = function(req, res) {
 
         if (user)
         {
-            temp.status = 200;
-            temp.message = 'User already exists.';
-            temp.data = null;
+
+            temp = common.ResponseFormat(200, 'User already exists', []);
 
             res.status(temp.status)
                 .json(temp);
@@ -118,15 +111,13 @@ exports.signup = function(req, res) {
             User.create(data).then(function(newUser) {
                 
                 if (!newUser) {
-                    temp.status = 200;
-                    temp.message = 'Unable to create the user.'
-                    temp.data = null;
+
+                    temp = common.ResponseFormat(200, 'Unable to create the User', []);
                 }
 
                 if (newUser) {
-                    temp.status = 200;
-                    temp.message = 'User created Successfully.'
-                    temp.data = newUser;
+
+                    temp = common.ResponseFormat(200, 'User created Successfully', newUser);
 
                     var permalink_local = req.body.username.toLowerCase().replace(' ', '').replace(/[^\w\s]/gi, '').trim();
 
@@ -157,7 +148,6 @@ exports.signup = function(req, res) {
                             return res.status(temp.status).json(temp);
                         }
 
-                        //console.log("added to verification");
                         temp.message = 'Successful Signup and link generated';
                         temp.data = newUser;
                         console.log(temp.message);
@@ -201,8 +191,6 @@ exports.signup = function(req, res) {
 
 exports.verify = function(req, res) {
 
-    var temp = new common.ResponseFormat();
-
     var Verification = models.verification;
 
     Verification.update({accountVerified : true}, {where :{id : req.params.id, $and:[
@@ -212,18 +200,16 @@ exports.verify = function(req, res) {
         ]}}).then(function(client) {
 
         if(!client) {
-            temp.status = 500;
-            temp.message = 'verification unsuccessfull';
-            temp.data = null;
+
+            temp = common.ResponseFormat(500, 'Verification Failed!', []);
 
             return res.status(temp.status)
-                .json(temp);
+                        .json(temp);
         }
 
-        temp.status = 200;
-        temp.message = 'The email for client ' + req.params.id + ' is verified.';
-        temp.data = client;
+        temp = common.ResponseFormat(200, 'The email for client ' + req.params.id + ' is verified!', client);
 
-        return res.status(temp.status).json(temp);
+        return res.status(temp.status)
+                    .json(temp);
     });
 };
