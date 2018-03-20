@@ -165,7 +165,7 @@ exports.signup = function(req, res) {
                     }
                     if (req.body.type == 'client')
                     {
-                        app.mailer.send('email', mailOptions, function (err, message) {
+                        req.app.mailer.send('email', mailOptions, function (err, message) {
                             if (err) {
                                 console.log(err);
                                 return;
