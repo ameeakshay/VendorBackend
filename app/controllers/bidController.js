@@ -48,6 +48,8 @@ function updatePosition(tenderId, BidId, message, res) {
 					else {
 						temp.message = 'Successfully created Bid ' + updatedBid.id;
 					}
+				
+					temp.data = updatedBid;
 				}
 
 				res.status(temp.status)

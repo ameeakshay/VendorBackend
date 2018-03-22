@@ -98,3 +98,47 @@ exports.get_client_tenders = function(req, res) {
             .json(temp);
     })
 };
+
+exports.get_all_bids = function(req, res) {
+
+    var Bid = models.bid;
+    var Tender = models.tender;
+
+    if (req.params.tenderId) {
+
+        Tender.findById(req.params.tenderId).then(function(tender) {
+
+            if (tender) {
+
+                Bid.findAll({where: {tenderId: req.params.tenderId}, order: ['value'], limit: 3, raw: true}).then(function(bids) {
+
+                    temp = common.ResponseFormat(200, '', []);
+
+                    if (bids.length) {
+                        temp.message = 'Top 3 bids for Tender ' + req.params.tenderId;
+                        temp.data = bids;
+                    }
+                    else {                
+                        temp.message = 'No bids';
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                });       
+            }
+            else {
+                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present.', [])
+
+                res.status(temp.status)
+                    .json(temp);
+            }
+        });
+
+    }
+    else {
+        temp = common.ResponseFormat(422, 'Tender ID missing', []);
+
+        res.status(temp.status)
+            .json(temp);
+    }
+};
