@@ -1,7 +1,9 @@
 
 var common = require('../common/common.js');
 var models = require('../models');
+var Sequelize = require('sequelize');
 
+const Op = Sequelize.Op;
 var Bid = models.bid;
 var Tender = models.tender;
 var SubCategory = models.sub_category;
@@ -47,34 +49,43 @@ exports.add_tender = function(req, res) {
     }
 };
 
-exports.get_main_category_tenders = function(req, res) {
+exports.get_potential_tenders = function(req, res) {
 
     var mainCategoryIds = req.query.mainCategoryId;
+    var bidsByVendor = new Set();
 
     if (!Array.isArray(req.query.mainCategoryId)){
         mainCategoryIds = Array.from(req.query.mainCategoryId);
     }   
 
-    Tender.findAll({
-        include: [{
-            model: models.sub_category,
-            where: {mainCategoryId: {in: mainCategoryIds}}
-        }]
-    }).then(function(tenders) {
-        
-        temp = common.ResponseFormat(200, '', []);            
-        
-        if (tenders.length) {
-            temp.message = 'Tenders associated with the requested Main Categories';
-            temp.data = tenders;
-        }
-        else {
-            temp.message = 'No tenders for the requested Main Categories';
+    Bid.findAll({where: {vendorId: req.user.id}, attributes: ['tenderId']}).then(function(bids) {
+        if (bids.length) {
+            bids.forEach(bid => bidsByVendor.add(bid.tenderId));
         }
 
-        res.status(temp.status)
-            .json(temp);
-    });
+        Tender.findAll({
+            include: [{
+                model: models.sub_category,
+                where: {mainCategoryId: {in: mainCategoryIds}}
+            }], where: {id: {
+                [Op.notIn]: Array.from(bidsByVendor)
+            }}
+        }).then(function(tenders) {
+            
+            temp = common.ResponseFormat(200, '', []);            
+            
+            if (tenders.length) {
+                temp.message = 'Tenders associated with the requested Main Categories';
+                temp.data = tenders;
+            }
+            else {
+                temp.message = 'No tenders for the requested Main Categories';
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        });
+    })
 };
 
 exports.get_client_tenders = function(req, res) {
