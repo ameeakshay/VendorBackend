@@ -2,9 +2,11 @@
 var common = require('../common/common.js');
 var models = require('../models');
 
-exports.add_tender = function(req, res) {
+var Bid = models.bid;
+var Tender = models.tender;
+var SubCategory = models.sub_category;
 
-    var Tender = models.tender;
+exports.add_tender = function(req, res) {
 
     if (req.body.duration && req.body.quantity && req.body.subCategoryId) {
 
@@ -47,9 +49,6 @@ exports.add_tender = function(req, res) {
 
 exports.get_main_category_tenders = function(req, res) {
 
-    var Tender = models.tender;
-    var SubCategory = models.sub_category;
-
     var mainCategoryIds = req.query.mainCategoryId;
 
     if (!Array.isArray(req.query.mainCategoryId)){
@@ -80,8 +79,6 @@ exports.get_main_category_tenders = function(req, res) {
 
 exports.get_client_tenders = function(req, res) {
 
-    var Tender = models.tender;
-
     Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
         temp = common.ResponseFormat(200, '', []);
@@ -100,9 +97,6 @@ exports.get_client_tenders = function(req, res) {
 };
 
 exports.get_all_bids = function(req, res) {
-
-    var Bid = models.bid;
-    var Tender = models.tender;
 
     if (req.params.tenderId) {
 
@@ -127,7 +121,7 @@ exports.get_all_bids = function(req, res) {
                 });       
             }
             else {
-                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present.', [])
+                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present', [])
 
                 res.status(temp.status)
                     .json(temp);
@@ -137,6 +131,34 @@ exports.get_all_bids = function(req, res) {
     }
     else {
         temp = common.ResponseFormat(422, 'Tender ID missing', []);
+
+        res.status(temp.status)
+            .json(temp);
+    }
+};
+
+exports.get_tender = function(req, res) {
+
+    if (req.params.tenderId) {
+
+        Tender.findById(req.params.tenderId).then(function(tender) {
+
+            temp = common.ResponseFormat(200, '', {});
+
+            if (tender) {
+                temp.message = 'Tender Details';
+                temp.data = tender;
+            }
+            else {
+                temp.message = 'Tender ' + req.params.tenderId + ' is not present';
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        });
+    }
+    else {
+        temp = common.ResponseFormat(422, 'Tender ID missing', {});
 
         res.status(temp.status)
             .json(temp);
