@@ -1,10 +1,14 @@
 
 var common = require('../common/common.js');
 var models = require('../models');
+var Sequelize = require('sequelize');
+
+const Op = Sequelize.Op;
+var Bid = models.bid;
+var Tender = models.tender;
+var SubCategory = models.sub_category;
 
 exports.add_tender = function(req, res) {
-
-    var Tender = models.tender;
 
     if (req.body.duration && req.body.quantity && req.body.subCategoryId) {
 
@@ -45,42 +49,46 @@ exports.add_tender = function(req, res) {
     }
 };
 
-exports.get_main_category_tenders = function(req, res) {
-
-    var Tender = models.tender;
-    var SubCategory = models.sub_category;
+exports.get_potential_tenders = function(req, res) {
 
     var mainCategoryIds = req.query.mainCategoryId;
+    var bidsByVendor = new Set();
 
     if (!Array.isArray(req.query.mainCategoryId)){
         mainCategoryIds = Array.from(req.query.mainCategoryId);
     }   
 
-    Tender.findAll({
-        include: [{
-            model: models.sub_category,
-            where: {mainCategoryId: {in: mainCategoryIds}}
-        }]
-    }).then(function(tenders) {
-        
-        temp = common.ResponseFormat(200, '', []);            
-        
-        if (tenders.length) {
-            temp.message = 'Tenders associated with the requested Main Categories';
-            temp.data = tenders;
-        }
-        else {
-            temp.message = 'No tenders for the requested Main Categories';
+    Bid.findAll({where: {vendorId: req.user.id}, attributes: ['tenderId']}).then(function(bids) {
+        if (bids.length) {
+            bids.forEach(bid => bidsByVendor.add(bid.tenderId));
         }
 
-        res.status(temp.status)
-            .json(temp);
-    });
+        Tender.findAll({
+            include: [{
+                model: models.sub_category,
+                where: {mainCategoryId: {in: mainCategoryIds}}
+            }], where: {id: {
+                [Op.notIn]: Array.from(bidsByVendor)
+            }}
+        }).then(function(tenders) {
+            
+            temp = common.ResponseFormat(200, '', []);            
+            
+            if (tenders.length) {
+                temp.message = 'Tenders associated with the requested Main Categories';
+                temp.data = tenders;
+            }
+            else {
+                temp.message = 'No tenders for the requested Main Categories';
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        });
+    })
 };
 
 exports.get_client_tenders = function(req, res) {
-
-    var Tender = models.tender;
 
     Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
@@ -97,4 +105,73 @@ exports.get_client_tenders = function(req, res) {
         res.status(temp.status)
             .json(temp);
     })
+};
+
+exports.get_all_bids = function(req, res) {
+
+    if (req.params.tenderId) {
+
+        Tender.findById(req.params.tenderId).then(function(tender) {
+
+            if (tender) {
+
+                Bid.findAll({where: {tenderId: req.params.tenderId}, order: ['value'], limit: 3, raw: true}).then(function(bids) {
+
+                    temp = common.ResponseFormat(200, '', []);
+
+                    if (bids.length) {
+                        temp.message = 'Top 3 bids for Tender ' + req.params.tenderId;
+                        temp.data = bids;
+                    }
+                    else {                
+                        temp.message = 'No bids';
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                });       
+            }
+            else {
+                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present', [])
+
+                res.status(temp.status)
+                    .json(temp);
+            }
+        });
+
+    }
+    else {
+        temp = common.ResponseFormat(422, 'Tender ID missing', []);
+
+        res.status(temp.status)
+            .json(temp);
+    }
+};
+
+exports.get_tender = function(req, res) {
+
+    if (req.params.tenderId) {
+
+        Tender.findById(req.params.tenderId).then(function(tender) {
+
+            temp = common.ResponseFormat(200, '', {});
+
+            if (tender) {
+                temp.message = 'Tender Details';
+                temp.data = tender;
+            }
+            else {
+                temp.message = 'Tender ' + req.params.tenderId + ' is not present';
+            }
+
+            res.status(temp.status)
+                .json(temp);
+        });
+    }
+    else {
+        temp = common.ResponseFormat(422, 'Tender ID missing', {});
+
+        res.status(temp.status)
+            .json(temp);
+    }
 };

@@ -1,7 +1,9 @@
 var common = require('../common/common.js');
 var models = require('../models');
 var _ = require('underscore');
+var Sequelize = require('sequelize');
 
+const Op = Sequelize.Op;
 var Bid = models.bid;
 
 function updateRow(key, value) {
@@ -41,13 +43,13 @@ function updatePosition(tenderId, BidId, message, res) {
 				if (updatedBid) {
 					if (message == 'update') {
 
-						updatedBid.decrement(['attemptsRemaining'], {by: 1});
-
 						temp.message = 'Successfully updated Bid ' + updatedBid.id;
 					}
 					else {
 						temp.message = 'Successfully created Bid ' + updatedBid.id;
 					}
+				
+					temp.data = updatedBid;
 				}
 
 				res.status(temp.status)
@@ -93,13 +95,15 @@ exports.update_bid = function(req, res) {
 
 	if (req.body.value && req.body.bidId) {
 
-		Bid.update({value: req.body.value}, {where: {id: req.body.bidId}}).then(function(updated) {
+		Bid.update({value: req.body.value}, {where: {id: req.body.bidId, attemptsRemaining: {[Op.gte]: 1}}}).then(function(updated) {
 
-			if(updated) {
+			if(updated[0] != 0) {
 
 				Bid.findById(req.body.bidId, {attributes: ['id', 'tenderId']}).then(function(updatedBid) {
 
 					if (updatedBid) {
+
+						updatedBid.decrement(['attemptsRemaining'], {by: 1});
 						updatePosition(updatedBid.tenderId, updatedBid.id, 'update', res);
 					}
 				})
@@ -118,4 +122,35 @@ exports.update_bid = function(req, res) {
         res.status(temp.status)
             .json(temp);
 	} 
+}
+
+exports.get_bids = function(req, res) {
+
+	if (req.params.status) {
+		
+		Bid.findAll({where: {vendorId: req.user.id}, 
+			include: [{
+				model: models.tender,
+				where: {status: req.params.status}}]
+		}).then(function(bids) {
+
+			temp = common.ResponseFormat(200, '', []);
+
+			if (bids.length) {
+				temp.message = 'All bids for Vendor ' + req.user.id;
+				temp.data = bids;
+			}
+			else {
+				temp.message = 'No bids associated with Vendor ' + req.user.id;
+			}
+
+			res.status(temp.status)
+				.json(temp);
+		})
+	}
+	else {
+        temp = common.ResponseFormat(422, 'Missing Parameters!', req.body);
+        res.status(temp.status)
+            .json(temp);
+	}
 }
