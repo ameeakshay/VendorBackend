@@ -10,7 +10,7 @@ module.exports = function(sequelize, Sequelize) {
         },
  
         tenderEnds: {
-            type: Sequelize.INTEGER,
+            type: 'TIMESTAMP',
             allowNull: false
         },
 
