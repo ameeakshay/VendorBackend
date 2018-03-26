@@ -159,13 +159,22 @@ exports.get_tender = function(req, res) {
             if (tender) {
                 temp.message = 'Tender Details';
                 temp.data = tender;
+
+                models.sub_category.findById(tender.subCategoryId, {raw: true}).then(function(categoryDetail) {
+
+                    if (categoryDetail) {
+                        temp.data.dataValues.sub_category = categoryDetail
+                    }
+
+                    res.status(temp.status)
+                        .json(temp);
+                })
             }
             else {
                 temp.message = 'Tender ' + req.params.tenderId + ' is not present';
+                res.status(temp.status)
+                    .json(temp);
             }
-
-            res.status(temp.status)
-                .json(temp);
         });
     }
     else {
