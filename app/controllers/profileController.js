@@ -1,6 +1,7 @@
 
 var common = require('../common/common.js');
 var models = require('../models');
+var sequelize = require('sequelize');
 
 exports.get_basic_details = function(req, res) {
 
@@ -112,6 +113,8 @@ exports.get_business_details = function(req, res) {
 exports.update_business_details = function(req, res) {
 
     var BusinessDetails = models.business_details;
+    var Verification = models.verification;
+    var ClientInfo = models.client;
 
     if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber && req.body.accountNumber) {
 
@@ -133,8 +136,26 @@ exports.update_business_details = function(req, res) {
 
                 if (user) {
                     temp.status = 200;
-                    temp.message = 'Business Profile updated Successfully'
+                    ClientInfo.findOne({where: sequelize.and({id :req.user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('NOW')), '>=', 24))}).then(function(created) {
+
+                        if(created) {
+                                Verification.update({canPostTender : true}, {where: {id: req.user.id}}).then(function(client) {
+
+                                if(client) {
+                                    console.log('You can post tender for ' + req.user.id);
+                                }
+                                else {
+                                    console.log('Tender cannot be posted for ' + req.user.id);
+                                }
+                            });
+                        }
+                        else {
+                            console.log('Duration greater than 24 hours');
+                        }
+                    });
+                    temp.message = 'Business Profile updated Successfully';
                     temp.data = user;
+                    
                 }
                 else {
                     temp.status = 400;

@@ -21,25 +21,38 @@ exports.add_tender = function(req, res) {
             subCategoryId: req.body.subCategoryId
         };
 
-        Tender.create(tenderData).then(function(newTender) {
+        var Verification = models.verification;
 
+        Verification.findOne({where: {id : req.user.id}}).then(function(verify) {
 
-            temp = common.ResponseFormat(201, '', []);
+            if(verify.canPostTender) {
 
-            if (newTender) {
-                temp.status = 201;
-                temp.message = 'Successfully created the Tender';
-                temp.data = newTender;
+                Tender.create(tenderData).then(function(newTender) {
+
+                    temp = common.ResponseFormat(201, '', []);
+
+                    if (newTender) {
+                        temp.status = 201;
+                        temp.message = 'Successfully created the Tender';
+                        temp.data = newTender;
+                    }
+                    else {
+                        temp.status = 409;
+                        temp.message = 'Unable to create the Tender';
+                        temp.data = [];
+                    }
+
+                });
             }
             else {
                 temp.status = 409;
-                temp.message = 'Unable to create the Tender';
+                temp.message = 'You are not eligible to post this tender at this point of time';
                 temp.data = [];
             }
-
             res.status(temp.status)
                 .json(temp);
         });
+        
     }
     else
     {   
