@@ -161,7 +161,9 @@ exports.get_bid = function(req, res) {
 
 		Bid.findById(req.params.bidId, 
 			{include: [{
-				model: models.tender}]
+				model: models.tender,
+				include: [{model: models.sub_category}]
+			}]
 		}).then(function(bid) {
 			temp = common.ResponseFormat(200, '', {});
 
