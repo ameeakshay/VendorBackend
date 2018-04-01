@@ -108,6 +108,10 @@ exports.signup = function(req, res) {
                 phoneNumber: req.body.phoneNumber
             };
 
+            if (req.body.type == 'vendor') {
+                data.mainCategoryId = req.body.mainCategoryId
+            }
+
             User.create(data).then(function(newUser) {
                 
                 if (!newUser) {
