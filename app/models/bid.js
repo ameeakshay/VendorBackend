@@ -21,7 +21,7 @@ module.exports = function(sequelize, Sequelize) {
 
         attemptsRemaining: {
             type: Sequelize.INTEGER,
-            defaultValue: 3,
+            defaultValue: 2,
             allowNull: false
         }
     });
