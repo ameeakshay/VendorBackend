@@ -154,3 +154,34 @@ exports.get_bids = function(req, res) {
             .json(temp);
 	}
 }
+
+exports.get_bid = function(req, res) {
+
+	if (req.params.bidId) {
+
+		Bid.findById(req.params.bidId, 
+			{include: [{
+				model: models.tender,
+				include: [{model: models.sub_category}]
+			}]
+		}).then(function(bid) {
+			temp = common.ResponseFormat(200, '', {});
+
+			if (bid) {
+				temp.message = 'Found the Bid ' + req.params.bidId;
+				temp.data = bid;
+			}
+			else {
+				temp.message = 'Unable to find the Bid';
+			}
+
+			res.status(temp.status)
+				.json(temp);
+		})
+	}
+	else {
+        temp = common.ResponseFormat(422, 'Missing Parameters!', req.body);
+        res.status(temp.status)
+            .json(temp);
+	}
+}
