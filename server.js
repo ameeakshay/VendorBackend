@@ -36,7 +36,7 @@ models.bid.belongsTo(models.tender);
 models.bid.belongsTo(models.vendor);
 
 //Sync Database
-models.sequelize.sync().then(function() {
+models.sequelize.sync({force: true}).then(function() {
  
     console.log('Nice! Database looks fine')
  
