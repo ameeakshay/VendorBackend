@@ -113,8 +113,8 @@ exports.get_business_details = function(req, res) {
 exports.update_business_details = function(req, res) {
 
     var BusinessDetails = models.business_details;
-    var Verification = models.verification;
-    var ClientInfo = models.client;
+    var Client = models.client;
+    var Verify = models.verification;
 
     if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber && req.body.accountNumber) {
 
@@ -135,24 +135,32 @@ exports.update_business_details = function(req, res) {
                 temp = common.ResponseFormat(200, '', []);
 
                 if (user) {
-                    temp.status = 200;
-                    ClientInfo.findOne({where: sequelize.and({id :req.user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('NOW')), '>=', 24))}).then(function(created) {
 
-                        if(created) {
-                                Verification.update({canPostTender : true}, {where: {id: req.user.id}}).then(function(client) {
+                    Verify.findOne({where: {id : user.id}}).then(function(verify) {
 
-                                if(client) {
-                                    console.log('You can post tender for ' + req.user.id);
+                        if(!verify.canPostTender) {
+
+                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('NOW')), '>=', 1))}).then(function(updated) {
+
+                                if(updated && !tenderPosting) {
+
+                                        Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
+
+                                        if(client) {
+                                            console.log('You can post tender for ' + user.id);
+                                        }
+                                        else {
+                                            console.log('Tender cannot be posted for ' + user.id);
+                                        }
+                                    });
                                 }
                                 else {
-                                    console.log('Tender cannot be posted for ' + req.user.id);
+                                    console.log('Duration less than 24 hours');
                                 }
                             });
                         }
-                        else {
-                            console.log('Duration greater than 24 hours');
-                        }
                     });
+                    temp.status = 200;
                     temp.message = 'Business Profile updated Successfully';
                     temp.data = user;
                     
