@@ -19,7 +19,7 @@ exports.get_basic_details = function(req, res) {
         User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
 
 
-            temp = common.ResponseFormat(200, '', []);
+            temp = common.ResponseFormat(200, '', {});
 
             if (user) {
                 temp.message = 'Basic Profile for ' + req.user.email;
@@ -55,7 +55,7 @@ exports.update_basic_details = function(req, res) {
 
                     User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
 
-                        temp = common.ResponseFormat(200, '', []);
+                        temp = common.ResponseFormat(200, '', {});
 
                         if (user) {
                             temp.message = 'Basic Profile updated Successfully'
@@ -71,7 +71,7 @@ exports.update_basic_details = function(req, res) {
                 }
                 else {
                     
-                    temp = common.ResponseFormat(400, 'Something went wrong with the update.', []);
+                    temp = common.ResponseFormat(400, 'Something went wrong with the update.', {});
 
                     res.status(temp.status)
                         .json(temp);
@@ -95,7 +95,7 @@ exports.get_business_details = function(req, res) {
 
     BusinessDetails.findById(req.user.id).then(function(user) {
 
-        temp = common.ResponseFormat(200, '', []);
+        temp = common.ResponseFormat(200, '', {});
 
         if (user) {
             temp.message = 'Business Profile for ' + req.user.email;
@@ -132,7 +132,7 @@ exports.update_business_details = function(req, res) {
             
             BusinessDetails.findById(req.user.id).then(function(user) {
 
-                temp = common.ResponseFormat(200, '', []);
+                temp = common.ResponseFormat(200, '', {});
 
                 if (user) {
 

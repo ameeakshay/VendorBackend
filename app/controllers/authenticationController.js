@@ -30,7 +30,7 @@ exports.login = function(req, res) {
 
         if (!user) {
 
-            temp = common.ResponseFormat(401, 'Authentication Failed. User not found!', []);
+            temp = common.ResponseFormat(401, 'Authentication Failed. User not found!', {});
 
             res.status(temp.status)
                 .json(temp);
@@ -122,7 +122,7 @@ exports.signup = function(req, res) {
         if (user)
         {
 
-            temp = common.ResponseFormat(200, 'User already exists', []);
+            temp = common.ResponseFormat(409, 'User already exists', {});
 
             res.status(temp.status)
                 .json(temp);
@@ -238,7 +238,7 @@ exports.verify = function(req, res) {
 
         if(!client) {
 
-            temp = common.ResponseFormat(500, 'Verification Failed!', []);
+            temp = common.ResponseFormat(500, 'Verification Failed!', {});
 
             return res.status(temp.status)
                         .json(temp);
