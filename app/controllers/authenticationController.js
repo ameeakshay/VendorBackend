@@ -69,7 +69,7 @@ exports.login = function(req, res) {
 
                         if(detailsPresent) {
 
-                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('NOW')), '>=', 1))}).then(function(created) {
+                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('UTC_TIMESTAMP')), '>=', 24))}).then(function(created) {
 
                                 if(created && !tenderPosting) {
 
@@ -95,7 +95,7 @@ exports.login = function(req, res) {
 
                     });
 
-                    res.status(temp.status)
+                    return res.status(temp.status)
                                 .json(temp);
             }
         }

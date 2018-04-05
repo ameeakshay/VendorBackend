@@ -140,9 +140,9 @@ exports.update_business_details = function(req, res) {
 
                         if(!verify.canPostTender) {
 
-                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('NOW')), '>=', 1))}).then(function(updated) {
+                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('UTC_TIMESTAMP')), '>=', 24))}).then(function(updated) {
 
-                                if(updated && !tenderPosting) {
+                                if(updated) {
 
                                         Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
 
