@@ -6,6 +6,19 @@ var Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 var Bid = models.bid;
 
+function validateBidValue(newValue, topValue){
+
+	console.log('newValue' + newValue)
+	console.log('topValue' + topValue)
+	console.log((topValue - topValue * 0.1))
+
+	if (newValue < (topValue - topValue * 0.1)) {
+		console.log('Disallowed')
+		return false
+	}
+	return true
+}
+
 function updateRow(key, value) {
   return Bid.update({position: value}, {where: {id: key}});
 }
@@ -93,28 +106,38 @@ exports.add_bid = function(req, res) {
 
 exports.update_bid = function(req, res) {
 
-	if (req.body.value && req.body.bidId) {
+	if (req.body.value && req.body.bidId && req.body.tenderId) {
 
-		Bid.update({value: req.body.value}, {where: {id: req.body.bidId, attemptsRemaining: {[Op.gte]: 1}}}).then(function(updated) {
+		Bid.findAll({where: {tenderId: req.body.tenderId}, order: ['value'], limit: 1, raw: true}).then(function(maxValueBid) {
 
-			if(updated[0] != 0) {
+			if (maxValueBid && validateBidValue(req.body.value, maxValueBid[0].value)) {
+				Bid.update({value: req.body.value}, {where: {id: req.body.bidId, attemptsRemaining: {[Op.gte]: 1}}}).then(function(updated) {
 
-				Bid.findById(req.body.bidId, {attributes: ['id', 'tenderId']}).then(function(updatedBid) {
+					if(updated[0] != 0) {
 
-					if (updatedBid) {
+						Bid.findById(req.body.bidId, {attributes: ['id', 'tenderId']}).then(function(updatedBid) {
 
-						updatedBid.decrement(['attemptsRemaining'], {by: 1});
-						updatePosition(updatedBid.tenderId, updatedBid.id, 'update', res);
+							if (updatedBid) {
+
+								updatedBid.decrement(['attemptsRemaining'], {by: 1});
+								updatePosition(updatedBid.tenderId, updatedBid.id, 'update', res);
+							}
+						})
+					}
+					else {
+
+						temp = common.ResponseFormat(200, 'Unable to update the Bid ' + req.body.bidId , []);
+						res.status(temp.status)
+							.json(temp);
 					}
 				})
 			}
 			else {
-
-				temp = common.ResponseFormat(200, 'Unable to update the Bid ' + req.body.bidId , {});
+				temp = common.ResponseFormat(200, 'Bid Value is lesser than 10 Percent of the lowest Bid.', [])
 				res.status(temp.status)
 					.json(temp);
 			}
-		})
+		});
 	}
 	else {   
 
