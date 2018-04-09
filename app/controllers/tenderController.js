@@ -21,25 +21,38 @@ exports.add_tender = function(req, res) {
             subCategoryId: req.body.subCategoryId
         };
 
-        Tender.create(tenderData).then(function(newTender) {
+        var Verification = models.verification;
 
+        Verification.findOne({where: {id : req.user.id}}).then(function(verify) {
 
-            temp = common.ResponseFormat(201, '', []);
+            if(verify.canPostTender) {
 
-            if (newTender) {
-                temp.status = 201;
-                temp.message = 'Successfully created the Tender';
-                temp.data = newTender;
+                Tender.create(tenderData).then(function(newTender) {
+
+                    temp = common.ResponseFormat(201, '', {});
+
+                    if (newTender) {
+                        temp.status = 201;
+                        temp.message = 'Successfully created the Tender';
+                        temp.data = newTender;
+                    }
+                    else {
+                        temp.status = 409;
+                        temp.message = 'Unable to create the Tender';
+                        temp.data = {};
+                    }
+
+                });
             }
             else {
                 temp.status = 409;
-                temp.message = 'Unable to create the Tender';
-                temp.data = [];
+                temp.message = 'You are not eligible to post this tender at this point of time';
+                temp.data = {};
             }
-
             res.status(temp.status)
                 .json(temp);
         });
+        
     }
     else
     {   
@@ -72,7 +85,7 @@ exports.get_potential_tenders = function(req, res) {
             }}
         }).then(function(tenders) {
             
-            temp = common.ResponseFormat(200, '', []);            
+            temp = common.ResponseFormat(200, '', {});            
             
             if (tenders.length) {
                 temp.message = 'Tenders associated with the requested Main Categories';
@@ -92,7 +105,7 @@ exports.get_client_tenders = function(req, res) {
 
     Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
-        temp = common.ResponseFormat(200, '', []);
+        temp = common.ResponseFormat(200, '', {});
 
         if (clientTenders.length) {
             temp.message = 'Retreived all Tenders for Client ' + req.user.id;
@@ -117,7 +130,7 @@ exports.get_all_bids = function(req, res) {
 
                 Bid.findAll({where: {tenderId: req.params.tenderId}, order: ['value'], limit: 3, raw: true}).then(function(bids) {
 
-                    temp = common.ResponseFormat(200, '', []);
+                    temp = common.ResponseFormat(200, '', {});
 
                     if (bids.length) {
                         temp.message = 'Top 3 bids for Tender ' + req.params.tenderId;
@@ -132,7 +145,7 @@ exports.get_all_bids = function(req, res) {
                 });       
             }
             else {
-                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present', [])
+                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present', {})
 
                 res.status(temp.status)
                     .json(temp);

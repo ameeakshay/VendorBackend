@@ -51,7 +51,7 @@ function updatePosition(tenderId, BidId, message, res) {
 		Promise.all(buildRowPromises(bidIdPositions)).then(function(updatedBids) {
 			Bid.findOne({where: {id: BidId}}).then(function(updatedBid) {
 
-				temp = common.ResponseFormat(200, '', []);
+				temp = common.ResponseFormat(200, '', {});
 
 				if (updatedBid) {
 					if (message == 'update') {
@@ -90,7 +90,7 @@ exports.add_bid = function(req, res) {
 			}
 			else {
 
-				temp = common.ResponseFormat(200, 'Unable to create the Bid!', []);
+				temp = common.ResponseFormat(200, 'Unable to create the Bid!', {});
 				res.status(temp.status)
 					.json(temp);
 			}
@@ -157,7 +157,7 @@ exports.get_bids = function(req, res) {
 				where: {status: req.params.status}}]
 		}).then(function(bids) {
 
-			temp = common.ResponseFormat(200, '', []);
+			temp = common.ResponseFormat(200, '', {});
 
 			if (bids.length) {
 				temp.message = 'All bids for Vendor ' + req.user.id;

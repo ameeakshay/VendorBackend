@@ -8,11 +8,11 @@ exports.get_main_categories = function(req, res) {
 
     MainCategory.findAll().then(function(mainCategories) {
         
-        temp = common.ResponseFormat(200, '', []);
+        temp = common.ResponseFormat(200, '', {});
 
         if (!mainCategories.length) {
             temp.message = 'No Main Categories Found';
-            temp.data = [];    
+            temp.data = {};    
         }
         else { 
             temp.message = 'All the Main Categories';
@@ -34,7 +34,7 @@ exports.add_main_category = function(req, res) {
 
         MainCategory.create(data).then(function(mainCategory) {
 
-            temp = common.ResponseFormat(201, '', []);
+            temp = common.ResponseFormat(201, '', {});
             
             if (mainCategory) {
                 temp.message = 'Successfully created the categorY';
@@ -43,7 +43,7 @@ exports.add_main_category = function(req, res) {
             else {
                 temp.status = 409;
                 temp.message = 'Unable to create the category';
-                temp.data = [];
+                temp.data = {};
             }
 
             res.status(temp.status)
@@ -58,11 +58,11 @@ exports.get_sub_categories = function(req, res) {
     SubCategory.findAll({where: {mainCategoryId : req.params.id}}).then(function(subCategories) {
 
 
-        temp = common.ResponseFormat(200, '', []);
+        temp = common.ResponseFormat(200, '', {});
         
         if (!subCategories.length) {
             temp.message = 'No Sub Categories Found';
-            temp.data = [];
+            temp.data = {};
         }
         else {
             temp.message = 'Sub categories corresponding to Main Category #' + req.params.id;
@@ -86,7 +86,7 @@ exports.add_sub_category = function(req, res) {
     SubCategory.create(data).then(function(subCategory) {
 
 
-        temp = common.ResponseFormat(201, '', []);
+        temp = common.ResponseFormat(201, '', {});
 
         if (subCategory) {
                 temp.status = 201;
@@ -96,7 +96,7 @@ exports.add_sub_category = function(req, res) {
             else {
                 temp.status = 409;
                 temp.message = 'Unable to create the sub category';
-                temp.data = [];
+                temp.data = {};
             }
 
             res.status(temp.status)
