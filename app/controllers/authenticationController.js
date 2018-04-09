@@ -47,56 +47,58 @@ exports.login = function(req, res) {
             }
             else {
             
-                    var Verify = models.verification;
-                    var BusinessDetails = models.business_details;
-                    var tenderPosting = false;
+                var Verify = models.verification;
+                var BusinessDetails = models.business_details;
+                var tenderPosting = false;
+                var temp = {};
 
-                    Verify.findOne({where: {id : user.id}}).then(function(verify) {
-                    
-                            console.log(verify);
-                            if (!verify.accountVerified) {
+                Verify.findOne({where: {id : user.id}}).then(function(verify) {
+                
+                    console.log(verify);
+                    if (!verify.accountVerified) {
 
-                                temp = common.ResponseFormat(403, 'Please complete the verification before logging in!', verify)
+                        temp = common.ResponseFormat(403, 'Please complete the verification before logging in!', verify)
 
-                                return res.status(temp.status)
-                                            .json(temp);    
+                        return res.status(temp.status)
+                                    .json(temp);    
+                    }
+
+                    tenderPosting = verify.canPostTender;
+                    temp = common.ResponseFormat(200, 'User logged in Successfully', {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+                });
+
+                BusinessDetails.findById(user.id).then(function(detailsPresent) {
+
+                    if(detailsPresent) {
+
+                        Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('UTC_TIMESTAMP')), '>=', 24))}).then(function(created) {
+
+                            if(created && !tenderPosting) {
+
+                                    Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
+
+                                    if(client) {
+                                        console.log('You can post tender for ' + user.id);
+                                    }
+                                    else {
+                                        console.log('Tender cannot be posted for ' + user.id);
+                                    }
+                                });
                             }
-                            tenderPosting = verify.canPostTender;
-                            temp = common.ResponseFormat(200, 'User logged in Successfully', {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
-                    });
+                            else {
+                                console.log('Duration less than 24 hours');
+                            }
+                        });
 
-                    BusinessDetails.findById(user.id).then(function(detailsPresent) {
+                    }
+                    else {
+                        console.log('The details are not yet updated.');
+                    }
 
-                        if(detailsPresent) {
-
-                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('UTC_TIMESTAMP')), '>=', 24))}).then(function(created) {
-
-                                if(created && !tenderPosting) {
-
-                                        Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
-
-                                        if(client) {
-                                            console.log('You can post tender for ' + user.id);
-                                        }
-                                        else {
-                                            console.log('Tender cannot be posted for ' + user.id);
-                                        }
-                                    });
-                                }
-                                else {
-                                    console.log('Duration less than 24 hours');
-                                }
-                            });
-
-                        }
-                        else {
-                            console.log('The details aaare not yet updated.');
-                        }      
-
-                    });
-
+                    console.log(temp.data);
                     return res.status(temp.status)
-                                .json(temp);
+                                .json(temp);      
+                });
             }
         }
     })
