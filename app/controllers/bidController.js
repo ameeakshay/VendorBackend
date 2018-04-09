@@ -126,14 +126,14 @@ exports.update_bid = function(req, res) {
 					}
 					else {
 
-						temp = common.ResponseFormat(200, 'Unable to update the Bid ' + req.body.bidId , []);
+						temp = common.ResponseFormat(200, 'Unable to update the Bid ' + req.body.bidId , {});
 						res.status(temp.status)
 							.json(temp);
 					}
 				})
 			}
 			else {
-				temp = common.ResponseFormat(200, 'Bid Value is lesser than 10 Percent of the lowest Bid.', [])
+				temp = common.ResponseFormat(200, 'Bid Value is lesser than 10 Percent of the lowest Bid.', {})
 				res.status(temp.status)
 					.json(temp);
 			}
