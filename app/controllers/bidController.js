@@ -157,7 +157,7 @@ exports.get_bids = function(req, res) {
 				where: {status: req.params.status}}]
 		}).then(function(bids) {
 
-			temp = common.ResponseFormat(200, '', {});
+			temp = common.ResponseFormat(200, '', []);
 
 			if (bids.length) {
 				temp.message = 'All bids for Vendor ' + req.user.id;
