@@ -105,7 +105,7 @@ exports.get_client_tenders = function(req, res) {
 
     Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
 
-        temp = common.ResponseFormat(200, '', {});
+        temp = common.ResponseFormat(200, '', []);
 
         if (clientTenders.length) {
             temp.message = 'Retreived all Tenders for Client ' + req.user.id;
