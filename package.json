@@ -18,6 +18,6 @@
     "mysql": "^2.15.0",
     "mysql2": "^1.5.3",
     "randomstring": "^1.1.5",
-    "sequelize": "^4.37.2"
+    "sequelize": "^4.37.3"
   }
 }

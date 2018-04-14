@@ -10,13 +10,18 @@ module.exports = function(sequelize, Sequelize) {
         },
  
         tenderEnds: {
-            type: Sequelize.INTEGER,
+            type: 'TIMESTAMP',
             allowNull: false
         },
 
         quantity: {
             type: Sequelize.STRING,
             allowNull: false
+        },
+
+        status: {
+            type: Sequelize.STRING,
+            defaultValue: "OnGoing"
         }
  
     });

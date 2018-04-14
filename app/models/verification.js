@@ -10,12 +10,12 @@ module.exports = function(sequelize, Sequelize) {
  
         verify_token : {
             type: Sequelize.STRING,
-            allowNull: false
+            allowNull: true
         },
  
         permalink: {
             type: Sequelize.STRING,
-            allowNull: false
+            allowNull: true
         },
 
         accountVerified: {
@@ -26,6 +26,17 @@ module.exports = function(sequelize, Sequelize) {
             if (value === 'true') value = true;
             if (value === 'false') value = false;
             this.setDataValue('accountVerified', value);
+          }
+        },
+
+        canPostTender: {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+          allowNull: true,
+          set: function(value) {
+            if (value === 'true') value = true;
+            if (value === 'false') value = false;
+            this.setDataValue('canPostTender', value);
           }
         }
  

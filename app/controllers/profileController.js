@@ -1,6 +1,7 @@
 
 var common = require('../common/common.js');
 var models = require('../models');
+var sequelize = require('sequelize');
 
 exports.get_basic_details = function(req, res) {
 
@@ -18,7 +19,7 @@ exports.get_basic_details = function(req, res) {
         User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
 
 
-            temp = common.ResponseFormat(200, '', []);
+            temp = common.ResponseFormat(200, '', {});
 
             if (user) {
                 temp.message = 'Basic Profile for ' + req.user.email;
@@ -54,7 +55,7 @@ exports.update_basic_details = function(req, res) {
 
                     User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
 
-                        temp = common.ResponseFormat(200, '', []);
+                        temp = common.ResponseFormat(200, '', {});
 
                         if (user) {
                             temp.message = 'Basic Profile updated Successfully'
@@ -70,7 +71,7 @@ exports.update_basic_details = function(req, res) {
                 }
                 else {
                     
-                    temp = common.ResponseFormat(400, 'Something went wrong with the update.', []);
+                    temp = common.ResponseFormat(400, 'Something went wrong with the update.', {});
 
                     res.status(temp.status)
                         .json(temp);
@@ -94,7 +95,7 @@ exports.get_business_details = function(req, res) {
 
     BusinessDetails.findById(req.user.id).then(function(user) {
 
-        temp = common.ResponseFormat(200, '', []);
+        temp = common.ResponseFormat(200, '', {});
 
         if (user) {
             temp.message = 'Business Profile for ' + req.user.email;
@@ -112,6 +113,8 @@ exports.get_business_details = function(req, res) {
 exports.update_business_details = function(req, res) {
 
     var BusinessDetails = models.business_details;
+    var Client = models.client;
+    var Verify = models.verification;
 
     if (req.body.bankName && req.body.ifscCode && req.body.bankBranch && req.body.address && req.body.gstNumber && req.body.accountNumber) {
 
@@ -129,12 +132,38 @@ exports.update_business_details = function(req, res) {
             
             BusinessDetails.findById(req.user.id).then(function(user) {
 
-                temp = common.ResponseFormat(200, '', []);
+                temp = common.ResponseFormat(200, '', {});
 
                 if (user) {
+
+                    Verify.findOne({where: {id : user.id}}).then(function(verify) {
+
+                        if(!verify.canPostTender) {
+
+                            Client.findOne({where: sequelize.and({id : user.id}, sequelize.where(sequelize.fn('TIMESTAMPDIFF', sequelize.literal('HOUR'), sequelize.col('createdAt'), sequelize.fn('UTC_TIMESTAMP')), '>=', 24))}).then(function(updated) {
+
+                                if(updated) {
+
+                                        Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
+
+                                        if(client) {
+                                            console.log('You can post tender for ' + user.id);
+                                        }
+                                        else {
+                                            console.log('Tender cannot be posted for ' + user.id);
+                                        }
+                                    });
+                                }
+                                else {
+                                    console.log('Duration less than 24 hours');
+                                }
+                            });
+                        }
+                    });
                     temp.status = 200;
-                    temp.message = 'Business Profile updated Successfully'
+                    temp.message = 'Business Profile updated Successfully';
                     temp.data = user;
+                    
                 }
                 else {
                     temp.status = 400;

@@ -27,10 +27,13 @@ app.set('view engine', 'ejs'); // set up ejs for templating
 
 //Models
 var models = require("./app/models");
- 
+
 models.sub_category.belongsTo(models.main_category);
+models.vendor.belongsTo(models.main_category);
 models.tender.belongsTo(models.client);
 models.tender.belongsTo(models.sub_category);
+models.bid.belongsTo(models.tender);
+models.bid.belongsTo(models.vendor);
 
 //Sync Database
 models.sequelize.sync().then(function() {

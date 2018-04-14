@@ -16,15 +16,19 @@
  
     "test": {
  
-        "username": "",
+        "username": "admin",
  
-        "password": null,
+        "password": "admin_1234",
  
-        "database": "",
+        "database": "ClientVendor",
  
-        "host": "",
+        "host": "sampledatabase.cw8mxkptek9r.ap-south-1.rds.amazonaws.com",
  
-        "dialect": "mysql"
+        "dialect": "mysql",
+
+        "dialectOptions": {
+            "ssl": "Amazon RDS"
+        }
  
     },
  
