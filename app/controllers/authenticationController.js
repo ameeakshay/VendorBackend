@@ -172,7 +172,7 @@ exports.signup = function(req, res) {
                     }
                     console.log(permalink_local +token);
 
-                    var link = "http://localhost:8080/verification/" + permalink_local + "/" + token + "/" + newUser.id;
+                    var link = "http://" + req.headers.host + "/verification/" + permalink_local + "/" + token + "/" + newUser.id;
 
                     var Verification = models.verification;
                     temp.status = 200;
