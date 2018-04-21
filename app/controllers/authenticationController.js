@@ -65,6 +65,7 @@ exports.login = function(req, res) {
 
                     tenderPosting = verify.canPostTender;
                     temp = common.ResponseFormat(200, 'User logged in Successfully', {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
+                    temp.data.canPostTender = tenderPosting;
                 });
 
                 BusinessDetails.findById(user.id).then(function(detailsPresent) {
@@ -75,9 +76,10 @@ exports.login = function(req, res) {
 
                             if(created && !tenderPosting) {
 
-                                    Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
+                                Verify.update({canPostTender : true}, {where: {id: user.id}}).then(function(client) {
 
                                     if(client) {
+                                        temp.data.canPostTender = true;
                                         console.log('You can post tender for ' + user.id);
                                     }
                                     else {
