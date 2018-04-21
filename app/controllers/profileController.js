@@ -6,31 +6,57 @@ var sequelize = require('sequelize');
 exports.get_basic_details = function(req, res) {
 
     var User = null;
+    var attributes_user = ['name', 'phoneNumber', 'email']
+    var updatedUser = {}
 
     if (req.user.type == 'client') {
         User = models.client;
     }
     else if (req.user.type == 'vendor') {
         User = models.vendor;
+        attributes_user.push('mainCategoryId');
     }
 
     if (User != null) {
 
-        User.findById(req.user.id, {attributes: ['name', 'phoneNumber', 'email']}).then(function(user) {
-
+        User.findById(req.user.id, {attributes: attributes_user}).then(function(user) {
 
             temp = common.ResponseFormat(200, '', {});
 
             if (user) {
-                temp.message = 'Basic Profile for ' + req.user.email;
-                temp.data = user;
+
+                if (req.user.type == 'vendor') {
+                    models.main_category.findById(user.mainCategoryId, {attributes: ['id', 'name']}).then(function(categoryInfo) {
+
+                        if (categoryInfo) {
+
+                            updatedUser = user;
+                            updatedUser.dataValues.maincateogry = categoryInfo.dataValues;
+                            delete updatedUser.dataValues['mainCategoryId'];
+                            temp.message = 'Basic Profile for ' + req.user.email;
+                            temp.data = updatedUser;
+                        
+                            res.status(temp.status)
+                                .json(temp)
+                        }                        
+                    });
+                }
+                else {
+
+                    temp.message = 'Basic Profile for ' + req.user.email;
+                    temp.data = user;
+                     
+                    res.status(temp.status)
+                        .json(temp);   
+                }
             }
             else {
-                temp.message = 'Unable to retrieve the Basic Profile for ' + req.user.email;
+                temp.message = 'Unable to retrieve the Basic Profile for ' + req.user.email;                
+                 
+                res.status(temp.status)
+                    .json(temp);
             }
-
-            res.status(temp.status)
-                .json(temp);
+        
         });
     }
 };
