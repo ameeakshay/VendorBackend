@@ -10,12 +10,12 @@ var SubCategory = models.sub_category;
 
 exports.add_tender = function(req, res) {
 
-    if (req.body.duration && req.body.quantity && req.body.subCategoryId) {
+    if (req.body.tenderEnds && req.body.quantity && req.body.subCategoryId) {
 
-        console.log("Client:  " + req.user.id + " is posting a Tender. " + "Duration: " + req.body.duration + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
+        console.log("Client:  " + req.user.id + " is posting a Tender. " + "End Date: " + req.body.tenderEnds + " Quantity: " + req.body.quantity + " SubCategory: " + req.body.subCategoryId);
 
         var tenderData = {
-            tenderEnds: req.body.duration,
+            tenderEnds: req.body.tenderEnds,
             quantity: req.body.quantity,
             clientId: req.user.id,
             subCategoryId: req.body.subCategoryId
@@ -130,7 +130,7 @@ exports.get_all_bids = function(req, res) {
 
                 Bid.findAll({where: {tenderId: req.params.tenderId}, order: ['value'], limit: 3, raw: true}).then(function(bids) {
 
-                    temp = common.ResponseFormat(200, '', {});
+                    temp = common.ResponseFormat(200, '', []);
 
                     if (bids.length) {
                         temp.message = 'Top 3 bids for Tender ' + req.params.tenderId;
@@ -145,7 +145,7 @@ exports.get_all_bids = function(req, res) {
                 });       
             }
             else {
-                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present', {})
+                temp = common.ResponseFormat(200, 'Tender ' +  req.params.tenderId + ' is not present', [])
 
                 res.status(temp.status)
                     .json(temp);
