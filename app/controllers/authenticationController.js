@@ -65,7 +65,10 @@ exports.login = function(req, res) {
 
                     tenderPosting = verify.canPostTender;
                     temp = common.ResponseFormat(200, 'User logged in Successfully', {"token": jwt.sign({ email: user.email, id: user.id, type: req.body.type }, 'ClientVendor')});
-                    temp.data.canPostTender = tenderPosting;
+                    
+                    if (req.body.type == 'client') {
+                        temp.data.canPostTender = tenderPosting;
+                    }
                 });
 
                 BusinessDetails.findById(user.id).then(function(detailsPresent) {
