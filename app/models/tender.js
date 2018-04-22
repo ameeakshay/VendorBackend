@@ -22,6 +22,10 @@ module.exports = function(sequelize, Sequelize) {
         status: {
             type: Sequelize.STRING,
             defaultValue: "OnGoing"
+        },
+
+        description: {
+            type: Sequelize.STRING
         }
  
     });
