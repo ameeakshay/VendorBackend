@@ -100,9 +100,22 @@ exports.login = function(req, res) {
                         console.log('The details are not yet updated.');
                     }
 
-                    console.log(temp.data);
-                    return res.status(temp.status)
+                    if (req.body.type == 'vendor') {
+
+                        models.main_category.findById(user.mainCategoryId, {attributes: ['id', 'name']}).then(function(categoryDetails) {
+
+                            if (categoryDetails) {
+                                temp.data.maincategory = categoryDetails.dataValues;
+                            }
+
+                            res.status(temp.status)
                                 .json(temp);      
+                        });
+                    }
+                    else {
+                        res.status(temp.status)
+                            .json(temp);   
+                    }  
                 });
             }
         }
