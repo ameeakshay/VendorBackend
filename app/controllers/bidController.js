@@ -149,23 +149,35 @@ exports.update_bid = function(req, res) {
 
 exports.get_bids = function(req, res) {
 
-	if (req.params.status) {
+    let page = req.query.page;
+    let limitBids = 15;
+    let offsetBids = limitBids * (page - 1);
+
+	if (req.query.status) {
 		
-		Bid.findAll({where: {vendorId: req.user.id}, 
+		Bid.findAndCountAll({where: {vendorId: req.user.id}, 
 			include: [{
 				model: models.tender,
-				where: {status: req.params.status}}]
-		}).then(function(bids) {
+				where: {status: req.query.status}}], 
+				limit: limitBids, offset: offsetBids}).then(function(bids) {
 
 			temp = common.ResponseFormat(200, '', []);
 
-			if (bids.length) {
+			if (bids.rows.length) {
+
+				let pages = Math.ceil(bids.count / limitBids);
+
 				temp.message = 'All bids for Vendor ' + req.user.id;
-				temp.data = bids;
+				temp.data = bids.rows;
+            	temp.pages = pages;
+
+            	console.log(temp.data.pages);
 			}
 			else {
 				temp.message = 'No bids associated with Vendor ' + req.user.id;
 			}
+
+			console.log(temp.data.pages);
 
 			res.status(temp.status)
 				.json(temp);

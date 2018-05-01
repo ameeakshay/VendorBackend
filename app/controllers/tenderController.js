@@ -116,17 +116,17 @@ exports.get_client_tenders = function(req, res) {
 
     Tender.findAndCountAll({where: {clientId: req.user.id}, limit: limitTenders, offset: offsetTenders}).then(function(clientTenders) {
 
-        let pages = Math.ceil(clientTenders.count / limitTenders);
-        let tenders = clientTenders.rows;
-
         console.log(clientTenders);
 
         temp = common.ResponseFormat(200, '', []);
 
-        if (clientTenders.count) {
+        if (clientTenders.rows.length) {
+            
+            let pages = Math.ceil(clientTenders.count / limitTenders);
+            
             temp.message = 'Retreived all Tenders for Client ' + req.user.id;
-            temp.data = clientTenders;
-            temp.data.pages = pages;
+            temp.data = clientTenders.rows;
+            temp.pages = pages;
         }
         else {
             temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
