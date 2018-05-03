@@ -71,6 +71,10 @@ exports.add_tender = function(req, res) {
 
 exports.get_potential_tenders = function(req, res) {
 
+    let page = req.query.page;
+    let limitTenders = 15;
+    let offsetTenders = limitTenders * (page - 1);
+
     var mainCategoryIds = req.query.mainCategoryId;
     var bidsByVendor = new Set();
 
@@ -83,20 +87,25 @@ exports.get_potential_tenders = function(req, res) {
             bids.forEach(bid => bidsByVendor.add(bid.tenderId));
         }
 
-        Tender.findAll({
+        Tender.findAndCountAll({
             include: [{
                 model: models.sub_category,
                 where: {mainCategoryId: {in: mainCategoryIds}}
             }], where: {id: {
                 [Op.notIn]: Array.from(bidsByVendor)
-            }}
+            }},
+            limit: limitTenders, offset: offsetTenders
         }).then(function(tenders) {
             
-            temp = common.ResponseFormat(200, '', {});            
+            temp = common.ResponseFormat(200, '', []);            
             
-            if (tenders.length) {
+            if (tenders.rows.length) {
+            
+                let pages = Math.ceil(tenders.count / limitTenders);
+                
                 temp.message = 'Tenders associated with the requested Main Categories';
-                temp.data = tenders;
+                temp.data = tenders.rows;
+                temp.pages = pages;
             }
             else {
                 temp.message = 'No tenders for the requested Main Categories';
