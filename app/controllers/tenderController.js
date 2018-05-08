@@ -105,7 +105,8 @@ exports.get_potential_tenders = function(req, res) {
                 
                 temp.message = 'Tenders associated with the requested Main Categories';
                 temp.data = tenders.rows;
-                temp.pages = pages;
+                temp.current_page_count = tenders.rows.length;
+                temp.total_count = tenders.count;
             }
             else {
                 temp.message = 'No tenders for the requested Main Categories';
@@ -135,7 +136,8 @@ exports.get_client_tenders = function(req, res) {
             
             temp.message = 'Retreived all Tenders for Client ' + req.user.id;
             temp.data = clientTenders.rows;
-            temp.pages = pages;
+            temp.current_page_count = clientTenders.rows.length;
+            temp.total_count = clientTenders.count;
         }
         else {
             temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;

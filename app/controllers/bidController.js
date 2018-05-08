@@ -169,7 +169,8 @@ exports.get_bids = function(req, res) {
 
 				temp.message = 'All bids for Vendor ' + req.user.id;
 				temp.data = bids.rows;
-            	temp.pages = pages;
+            	temp.current_page_count = bids.rows.length;
+            	temp.total_count = bids.count;
 
             	console.log(temp.data.pages);
 			}
