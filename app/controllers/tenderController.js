@@ -120,7 +120,7 @@ exports.get_potential_tenders = function(req, res) {
 
 exports.get_client_tenders = function(req, res) {
 
-    let page = req.params.page;
+    let page = req.query.page;
     let limitTenders = 15;
     let offsetTenders = limitTenders * (page - 1);
 
