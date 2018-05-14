@@ -71,6 +71,10 @@ exports.add_tender = function(req, res) {
 
 exports.get_potential_tenders = function(req, res) {
 
+    let page = req.query.page;
+    let limitTenders = 15;
+    let offsetTenders = limitTenders * (page - 1);
+
     var mainCategoryIds = req.query.mainCategoryId;
     var bidsByVendor = new Set();
 
@@ -83,20 +87,26 @@ exports.get_potential_tenders = function(req, res) {
             bids.forEach(bid => bidsByVendor.add(bid.tenderId));
         }
 
-        Tender.findAll({
+        Tender.findAndCountAll({
             include: [{
                 model: models.sub_category,
                 where: {mainCategoryId: {in: mainCategoryIds}}
             }], where: {id: {
                 [Op.notIn]: Array.from(bidsByVendor)
-            }}
+            }},
+            limit: limitTenders, offset: offsetTenders
         }).then(function(tenders) {
             
-            temp = common.ResponseFormat(200, '', {});            
+            temp = common.ResponseFormat(200, '', []);            
             
-            if (tenders.length) {
+            if (tenders.rows.length) {
+            
+                let pages = Math.ceil(tenders.count / limitTenders);
+                
                 temp.message = 'Tenders associated with the requested Main Categories';
-                temp.data = tenders;
+                temp.data = tenders.rows;
+                temp.current_page_count = tenders.rows.length;
+                temp.total_count = tenders.count;
             }
             else {
                 temp.message = 'No tenders for the requested Main Categories';
@@ -110,13 +120,24 @@ exports.get_potential_tenders = function(req, res) {
 
 exports.get_client_tenders = function(req, res) {
 
-    Tender.findAll({where: {clientId: req.user.id}}).then(function(clientTenders) {
+    let page = req.query.page;
+    let limitTenders = 15;
+    let offsetTenders = limitTenders * (page - 1);
+
+    Tender.findAndCountAll({where: {clientId: req.user.id}, limit: limitTenders, offset: offsetTenders}).then(function(clientTenders) {
+
+        console.log(clientTenders);
 
         temp = common.ResponseFormat(200, '', []);
 
-        if (clientTenders.length) {
+        if (clientTenders.rows.length) {
+            
+            let pages = Math.ceil(clientTenders.count / limitTenders);
+            
             temp.message = 'Retreived all Tenders for Client ' + req.user.id;
-            temp.data = clientTenders;
+            temp.data = clientTenders.rows;
+            temp.current_page_count = clientTenders.rows.length;
+            temp.total_count = clientTenders.count;
         }
         else {
             temp.message = 'Unable to find Tenders posted by Client ' + req.user.id;
